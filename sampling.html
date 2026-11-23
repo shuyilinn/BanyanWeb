@@ -25,9 +25,12 @@ row and every row writes every one of its tokens. Right, Banyan computes them as
 same tokens share those nodes, and a node is written once however many samples pass through it. Below, the samples
 each side has finished so far.</p>
 <div class="stage" id="stage"></div>
-<p class="small">The prompt is at the centre of each circle and the distance from it is the token position (the dashed ring is the 128-token limit). Left: each of vLLM's 10,000 samples is one line, darker while it is being written. Right: Banyan's tree; a line's width is the number of samples through it. Both are
-ordered around the circle by text, so outputs that begin the same way are next to each other. Hover the chart to move
-the clock.</p>
+<p class="small">Each side is drawn left to right: the prompt is on the left edge and the horizontal position is the token
+position in the sample (the dashed line is the 128-token limit). Left: vLLM's 10,000 samples, one horizontal line each,
+top to bottom in the order vLLM started them (it writes 1,024 at a time); a line is dark blue while vLLM is writing it
+and light once it is written. Right: Banyan's tree, top to bottom in text order so samples that begin the same way are
+next to each other; a line's width is the number of samples through it, and where samples split the line branches
+downwards. Hover the chart to move the clock.</p>
 
 <h3>Setup</h3>
 <table class="setup" id="setup"></table>
