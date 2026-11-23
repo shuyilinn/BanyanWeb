@@ -30,7 +30,8 @@ judged. vLLM generates all 8,192 first and the judge runs afterwards; Banyan jud
 position in the answer (the dashed line is the 64-token limit). Left: each of vLLM's 1,024 answers to the first question
 is one horizontal line, darker while it is being written; vLLM is writing the other 7 questions' rows at the same time.
 Right: Banyan's tree for the first question; a line's width is the number of answers through it, and where answers split
-the line branches downwards. In this run 717 of the 1,024 answers repeat the question word for word for 27 tokens and
+the line branches downwards. A black dot marks an answer the judge found leaking the forgotten fact, from the moment it
+was judged. In this run 717 of the 1,024 answers repeat the question word for word for 27 tokens and
 split 80 ways only at the author's name. Both sides list the answers top to bottom in text order. Hover the chart to move
 the clock.</p>
 <h3>Leaked answers per question</h3>

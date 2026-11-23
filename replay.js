@@ -80,7 +80,20 @@
       [[done, HZ ? base * 1.6 : base], [paused, base * 2], [live, 0.6]].forEach(function (p) { var arr = p[0]; c.globalAlpha = p[1]; c.beginPath();
         for (var j = 0; j < arr.length; j += 2) { var f = (arr[j] + 0.5) / N, a0 = pt(g, 0, f), a1 = pt(g, arr[j + 1], f); c.moveTo(a0[0], a0[1]); c.lineTo(a1[0], a1[1]); } c.stroke(); });
       c.globalAlpha = 1;
-      return [["tokens written", n(written)], ["rows being written", n(live.length / 2)]];
+      var lk = drawMarks(c, g, s.marks, t, function (m) { return (m[0] + 0.5) / N; });
+      return [["tokens written", n(written)], ["rows being written", n(live.length / 2)], lk];
+    }
+    // outputs the judge flagged (D.marked), drawn where they end, from the moment they were judged
+    function drawMarks(c, g, marks, t, frac) {
+      if (!marks || !D.marked) return null;
+      var cnt = 0, rad = 2.6 * DPR;
+      for (var i = 0; i < marks.length; i++) {
+        var m = marks[i]; if (m[2] > t) continue; cnt += m[3] || 1;
+        var p = pt(g, m[1], frac(m));
+        c.fillStyle = "#fff"; c.beginPath(); c.arc(p[0], p[1], rad + 1.2 * DPR, 0, 6.2832); c.fill();
+        c.fillStyle = "#111"; c.beginPath(); c.arc(p[0], p[1], rad, 0, 6.2832); c.fill();
+      }
+      return ["judged " + D.marked, n(cnt)];
     }
     function drawTree(k, t) {
       var s = S[k], g = geo[k], c = frame(k), i, U = s.units;
@@ -97,7 +110,8 @@
         c.moveTo(p0[0], p0[1]); c.lineTo(p1[0], p1[1]); c.stroke();
       }
       c.globalAlpha = 1;
-      return [["tree nodes written", n(bs(s.made, t))], ["", ""]];
+      var lk = drawMarks(c, g, s.marks, t, function (m) { return m[0] / U; });
+      return [["tree nodes written", n(bs(s.made, t))], ["", ""], lk];
     }
     function cells(k, list) { var e = out[k]; if (!e.firstChild) list.forEach(function () { var d = document.createElement("div"); d.className = "ro"; d.innerHTML = '<span class="k"></span><span class="v"></span>'; e.appendChild(d); });
       list.forEach(function (r, j) { e.children[j].firstChild.textContent = r[0]; e.children[j].lastChild.textContent = r[1]; }); }
@@ -126,7 +140,9 @@
       [0, 1].forEach(function (k) {
         var tk = Math.min(t, SEC[k]), rows = S[k].kind === "rows" ? drawRows(k, tk) : drawTree(k, tk), c = bs(FIN[k], tk);
         cnt.push(c);
-        cells(k, [[D.chart.label.split(",")[0], n(c) + " of " + n(TOTAL)], rows[0], ["tokens generated (run total)", n(D.tokens[k ? "right" : "left"])], ["finished at", t >= SEC[k] ? SEC[k].toFixed(SEC[k] >= 20 ? 1 : 2) + " s" : "–"]]);
+        var cl_ = [[D.chart.label.split(",")[0], n(c) + " of " + n(TOTAL)], rows[0], ["tokens generated (run total)", n(D.tokens[k ? "right" : "left"])], ["finished at", t >= SEC[k] ? SEC[k].toFixed(SEC[k] >= 20 ? 1 : 2) + " s" : "–"]];
+        if (rows[2]) cl_.splice(2, 0, rows[2]);
+        cells(k, cl_);
         path[k].setAttribute("d", curve(FIN[k], tk));
         lab[k].setAttribute("x", X(tk) + 6); lab[k].setAttribute("y", Y(c) + 4 + (k === 0 && Math.abs(Y(cnt[0]) - Y(bs(FIN[1], Math.min(t, SEC[1])))) < 13 ? 13 : 0));
       });
