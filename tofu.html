@@ -26,8 +26,12 @@ questions at once, 1,024 answers each, all judged.</p>
 1,024 answers as rows; right, Banyan's tree of the same 1,024 answers. Below, how many of the 8,192 answers each side has
 judged. vLLM generates all 8,192 first and the judge runs afterwards; Banyan judges each answer as it finishes.</p>
 <div class="stage" id="stage"></div>
-<p class="small">The prompt is at the centre of each circle and the distance from it is the token position (the dashed ring is the 64-token limit). Left: each of vLLM's 1,024 answers to the first question is one line, darker while it is being written; vLLM is writing the other 7 questions' rows at the same time. Right: Banyan's tree for the first question; a line's width is the number of answers through it. Both are
-ordered around the circle by text, so outputs that begin the same way are next to each other. Hover the chart to move
+<p class="small">Each side is drawn left to right: the question is on the left edge and the horizontal position is the token
+position in the answer (the dashed line is the 64-token limit). Left: each of vLLM's 1,024 answers to the first question
+is one horizontal line, darker while it is being written; vLLM is writing the other 7 questions' rows at the same time.
+Right: Banyan's tree for the first question; a line's width is the number of answers through it, and where answers split
+the line branches downwards. In this run 717 of the 1,024 answers repeat the question word for word for 27 tokens and
+split 80 ways only at the author's name. Both sides list the answers top to bottom in text order. Hover the chart to move
 the clock.</p>
 <h3>Leaked answers per question</h3>
 <p class="small">Both sides sample, so the counts differ from run to run; the evaluation checks that the leak rates over 32 questions agree.

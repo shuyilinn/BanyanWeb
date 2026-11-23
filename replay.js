@@ -42,11 +42,30 @@
       panels.appendChild(p); cv.push(p.querySelector("canvas")); out.push(p.querySelector(".readout"));
     });
     var geo = [];
-    function fit(c) { var w = c.clientWidth || 300; c.width = Math.round(w * DPR); c.height = Math.round(w * 0.94 * DPR); c.style.height = Math.round(w * 0.94) + "px";
-      return { W: c.width, H: c.height, cx: c.width / 2, cy: c.height / 2, rs: (Math.min(c.width, c.height) / 2 - 8 * DPR) / (R * 1.05) }; }
+    // layout: "radial" (the prompt at the centre, token position outwards) or "h" (the prompt on the left, token
+    // position to the right, outputs stacked top to bottom). In both a side's outputs are ordered by their text.
+    var HZ = D.layout === "h";
+    function fit(c) {
+      var w = c.clientWidth || 300, h = HZ ? Math.round(w * 1.05) : Math.round(w * 0.94);
+      c.width = Math.round(w * DPR); c.height = Math.round(h * DPR); c.style.height = h + "px";
+      var g = { W: c.width, H: c.height, cx: c.width / 2, cy: c.height / 2, rs: (Math.min(c.width, c.height) / 2 - 8 * DPR) / (R * 1.05) };
+      if (HZ) { g.x0 = 6 * DPR; g.y0 = 6 * DPR; g.xs = (g.W - 12 * DPR) / (R * 1.02); g.hh = g.H - 26 * DPR; }
+      return g;
+    }
+    function pt(g, depth, frac) {             // frac in 0..1: the place among the outputs
+      if (HZ) return [g.x0 + depth * g.xs, g.y0 + frac * g.hh];
+      var a = -Math.PI / 2 + 2 * Math.PI * frac, r = depth * g.rs; return [g.cx + Math.cos(a) * r, g.cy + Math.sin(a) * r];
+    }
     function frame(k) {
       var g = geo[k], c = cv[k].getContext("2d"); c.clearRect(0, 0, g.W, g.H);
-      if (RING) { c.setLineDash([3 * DPR, 4 * DPR]); c.strokeStyle = "#cfcbc1"; c.lineWidth = DPR; c.beginPath(); c.arc(g.cx, g.cy, RING * g.rs, 0, 6.2832); c.stroke(); c.setLineDash([]); }
+      c.setLineDash([3 * DPR, 4 * DPR]); c.strokeStyle = "#cfcbc1"; c.lineWidth = DPR;
+      if (HZ) {
+        if (RING) { c.beginPath(); c.moveTo(g.x0 + RING * g.xs, g.y0); c.lineTo(g.x0 + RING * g.xs, g.y0 + g.hh); c.stroke(); }
+        c.setLineDash([]); c.fillStyle = "#828282"; c.font = (11 * DPR) + "px sans-serif"; c.textAlign = "center";
+        var step = [8, 16, 32, 64, 128, 256].find(function (x) { return R / x <= 6; }) || 256;
+        for (var x = 0; x <= R; x += step) c.fillText(x, Math.min(g.W - 10 * DPR, Math.max(8 * DPR, g.x0 + x * g.xs)), g.H - 6 * DPR);
+      } else if (RING) { c.beginPath(); c.arc(g.cx, g.cy, RING * g.rs, 0, 6.2832); c.stroke(); }
+      c.setLineDash([]);
       return c;
     }
     function drawRows(k, t) {
@@ -56,24 +75,26 @@
         for (var q = 0; q < ru.length; q += 2) { var got = st - ru[q] + 1; if (got > 0) { L += Math.min(got, ru[q + 1]); if (got <= ru[q + 1]) on = true; } }
         written += L; if (L > 0) (L >= s.len[i] ? done : (on ? live : paused)).push(i, L);
       }
-      c.lineWidth = Math.max(0.6, 0.5 * DPR); c.strokeStyle = COL[k];
+      c.lineWidth = HZ ? Math.max(0.5, Math.min(2 * DPR, g.hh / N * 0.8)) : Math.max(0.6, 0.5 * DPR); c.strokeStyle = COL[k];
       var base = N > 3000 ? 0.12 : 0.25;
-      [[done, base], [paused, base * 2], [live, 0.55]].forEach(function (p) { var arr = p[0]; c.globalAlpha = p[1]; c.beginPath();
-        for (var j = 0; j < arr.length; j += 2) { var a = -Math.PI / 2 + 2 * Math.PI * (arr[j] + 0.5) / N, r = arr[j + 1] * g.rs; c.moveTo(g.cx, g.cy); c.lineTo(g.cx + Math.cos(a) * r, g.cy + Math.sin(a) * r); } c.stroke(); });
+      [[done, HZ ? base * 1.6 : base], [paused, base * 2], [live, 0.6]].forEach(function (p) { var arr = p[0]; c.globalAlpha = p[1]; c.beginPath();
+        for (var j = 0; j < arr.length; j += 2) { var f = (arr[j] + 0.5) / N, a0 = pt(g, 0, f), a1 = pt(g, arr[j + 1], f); c.moveTo(a0[0], a0[1]); c.lineTo(a1[0], a1[1]); } c.stroke(); });
       c.globalAlpha = 1;
       return [["tokens written", n(written)], ["rows being written", n(live.length / 2)]];
     }
     function drawTree(k, t) {
       var s = S[k], g = geo[k], c = frame(k), i, U = s.units;
-      var ang = function (x) { return -Math.PI / 2 + 2 * Math.PI * x / U; };
       c.strokeStyle = COL[k];
       for (i = 0; i < s.seg.length; i++) {
         var sg = s.seg[i], m = bs(sg[4], t); if (!m) continue;
-        var a = ang(sg[0]), pa = ang(sg[1]), r0 = sg[2] * g.rs, r1 = (sg[2] + m) * g.rs;
+        var f = sg[0] / U, pf = sg[1] / U, p0 = pt(g, sg[2], f), p1 = pt(g, sg[2] + m, f);
         c.globalAlpha = sg[3] > 1 ? 0.9 : 0.5; c.lineWidth = Math.max(0.7, 0.6 * DPR) + 7 * DPR * Math.sqrt(sg[3] / U);
         c.beginPath();
-        if (r0 > 0 && Math.abs(a - pa) > 1e-6) c.arc(g.cx, g.cy, r0, Math.min(a, pa), Math.max(a, pa));
-        c.moveTo(g.cx + Math.cos(a) * r0, g.cy + Math.sin(a) * r0); c.lineTo(g.cx + Math.cos(a) * r1, g.cy + Math.sin(a) * r1); c.stroke();
+        if (sg[2] > 0 && Math.abs(f - pf) > 1e-9) {
+          if (HZ) { var q = pt(g, sg[2], pf); c.moveTo(q[0], q[1]); c.lineTo(p0[0], p0[1]); }
+          else { var a = -Math.PI / 2 + 2 * Math.PI * f, pa = -Math.PI / 2 + 2 * Math.PI * pf; c.arc(g.cx, g.cy, sg[2] * g.rs, Math.min(a, pa), Math.max(a, pa)); }
+        }
+        c.moveTo(p0[0], p0[1]); c.lineTo(p1[0], p1[1]); c.stroke();
       }
       c.globalAlpha = 1;
       return [["tree nodes written", n(bs(s.made, t))], ["", ""]];
