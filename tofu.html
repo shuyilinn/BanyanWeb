@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Banyan: Did the model forget? Leak rate after unlearning</title>
-<link rel="stylesheet" href="style.css?v=5c43a0d0">
+<link rel="stylesheet" href="style.css?v=2973f821">
 </head>
 <body>
 <header class="site-header"><div class="wrapper">
@@ -29,7 +29,7 @@ judged. vLLM generates all 8,192 first and the judge runs afterwards; Banyan jud
 <p class="small">Each side is drawn left to right: the question is on the left edge and the horizontal position is the token
 position in the answer (the dashed line is the 64-token limit). Both sides show all 8 questions of the batch, top to
 bottom, and within a question the answers in text order. Left: vLLM's 8 × 1,024 answers, one horizontal line each; a
-line is black while vLLM is writing it and blue once it is written, and white gaps separate the questions. Right:
+line is dark blue while vLLM is writing it and light once it is written, and white gaps separate the questions. Right:
 Banyan's 8 trees, one per question; a line's width is the number of answers through it, and where answers split the line
 branches downwards (in the first question, 717 of the 1,024 answers repeat the question word for word for 27 tokens and
 split 80 ways only at the author's name). Hover the chart to move the clock.</p>
@@ -52,8 +52,8 @@ vLLM: <span data-fill="D.leaked.left.join(', ')"></span>. Banyan: <span data-fil
 
 <footer class="site-footer"><div class="wrapper">Banyan is a research system under development.</div></footer>
 
-<script src="data/tofu.js?v=22b9a450"></script>
-<script src="replay.js?v=746e918d"></script>
+<script src="data/tofu.js?v=b1d27855"></script>
+<script src="replay.js?v=af3a7821"></script>
 <script>
 (function () {
   var D = window.RUNS["tofu"], n = Replay.n;

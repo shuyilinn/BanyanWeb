@@ -9,7 +9,7 @@
   function bs(arr, t) { var lo = 0, hi = arr.length; while (lo < hi) { var m = (lo + hi) >> 1; if (arr[m] <= t) lo = m + 1; else hi = m; } return lo; }
 
   function mount(root, D) {
-    var LIVE = "#111111", MARKC = "#12805c";          // black: being written; green: an output the judge flagged
+    var DARK = ["#0d3a73", "#a63a12"];                // the same hues, dark: rows being written
     var S = [D.sides.left, D.sides.right], COL = [BLUE, ORANGE], SEC = [D.seconds.left, D.seconds.right];
     var TMAX = Math.max(SEC[0], SEC[1]), RING = D.ring || 0, R = RING;
     S.forEach(function (s) {
@@ -27,7 +27,7 @@
       '<input type="range" min="0" max="1000" value="0" step="1" aria-label="Time in the runs">' +
       '<label>speed <select><option value="0.25">¼×</option><option value="0.5">½×</option><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option><option value="8">8×</option></select></label></div>' +
       '<div class="panels"></div>' +
-      '<div class="markkey"><span class="live" style="margin-left:0"></span>Black: being written' + (D.marked ? '<span class="dot" style="margin-left:14px"></span>' + (D.markedLegend || D.marked) : '') + '</div>' +
+      (D.marked ? '<div class="markkey"><span class="dot"></span>' + (D.markedLegend || D.marked) + '</div>' : '') +
       CH.map(function (spec) {
         var leg = spec.series ? spec.series.map(function (x) { var col = x.side ? ORANGE : BLUE;
             return '<span class="legend-i" style="margin-left:14px"><i style="background:' + (x.dash ? 'repeating-linear-gradient(90deg,' + col + ' 0 4px,transparent 4px 7px)' : col) + '"></i>' + x.name + '</span>'; }).join("")
@@ -84,7 +84,7 @@
       c.lineWidth = HZ ? Math.max(0.5, Math.min(2 * DPR, g.hh / N * 0.8)) : Math.max(0.6, 0.5 * DPR); c.strokeStyle = COL[k];
       var base = N > 3000 ? 0.12 : 0.25;
       // finished rows light, rows being written dark, so the writing front stays visible
-      [[done, HZ ? base * 1.6 : base, COL[k]], [paused, base * 2, COL[k]], [live, 0.9, LIVE]].forEach(function (p) { var arr = p[0]; c.globalAlpha = p[1]; c.strokeStyle = p[2]; c.beginPath();
+      [[done, HZ ? base * 1.6 : base, COL[k]], [paused, base * 2, COL[k]], [live, 0.95, DARK[k]]].forEach(function (p) { var arr = p[0]; c.globalAlpha = p[1]; c.strokeStyle = p[2]; c.beginPath();
         for (var j = 0; j < arr.length; j += 2) { var f = (arr[j] + 0.5) / N, a0 = pt(g, 0, f), a1 = pt(g, arr[j + 1], f); c.moveTo(a0[0], a0[1]); c.lineTo(a1[0], a1[1]); } c.stroke(); });
       c.globalAlpha = 1;
       if (HZ && s.bands > 1) { c.strokeStyle = "#fff"; c.lineWidth = 2 * DPR; c.beginPath();      // a gap between questions
@@ -100,7 +100,7 @@
         var m = marks[i]; if (m[2] > t) continue; cnt += m[3] || 1;
         var p = pt(g, m[1], frac(m));
         c.fillStyle = "#fff"; c.beginPath(); c.arc(p[0], p[1], rad + 1.2 * DPR, 0, 6.2832); c.fill();
-        c.fillStyle = MARKC; c.beginPath(); c.arc(p[0], p[1], rad, 0, 6.2832); c.fill();
+        c.fillStyle = "#111"; c.beginPath(); c.arc(p[0], p[1], rad, 0, 6.2832); c.fill();
       }
       return ["judged " + D.marked, n(cnt)];
     }
@@ -110,9 +110,7 @@
       for (i = 0; i < s.seg.length; i++) {
         var sg = s.seg[i], m = bs(sg[4], t); if (!m) continue;
         var f = sg[0] / U, pf = sg[1] / U, p0 = pt(g, sg[2], f), p1 = pt(g, sg[2] + m, f);
-        var growing = m < sg[4].length;          // a branch still being written: black
-        c.strokeStyle = growing ? LIVE : COL[k];
-        c.globalAlpha = growing ? 0.9 : (sg[3] > 1 ? 0.9 : 0.5); c.lineWidth = Math.max(0.7, 0.6 * DPR) + 7 * DPR * Math.sqrt(sg[3] / U);
+        c.globalAlpha = sg[3] > 1 ? 0.9 : 0.5; c.lineWidth = Math.max(0.7, 0.6 * DPR) + 7 * DPR * Math.sqrt(sg[3] / U);
         c.beginPath();
         if (sg[2] > 0 && Math.abs(f - pf) > 1e-9) {
           if (HZ) { var q = pt(g, sg[2], pf); c.moveTo(q[0], q[1]); c.lineTo(p0[0], p0[1]); }
