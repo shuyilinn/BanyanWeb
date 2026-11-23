@@ -19,21 +19,25 @@
       } else { s.deep = Math.max.apply(null, s.len); s.units = s.len.length; }
       R = Math.max(R, s.deep);
     });
-    var FIN = [D.chart.left, D.chart.right], TOTAL = D.chart.total;
+    var CH = D.charts || [D.chart];                     // one or more charts of what each side has finished
     root.innerHTML =
       '<div class="clockbar"><button class="btn primary" type="button">Play</button><button class="btn" type="button">Restart</button>' +
       '<div class="clock"><span data-r="clock">0.0</span><span class="u"> s</span></div>' +
       '<input type="range" min="0" max="1000" value="0" step="1" aria-label="Time in the runs">' +
       '<label>speed <select><option value="0.25">¼×</option><option value="0.5">½×</option><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option><option value="8">8×</option></select></label></div>' +
       '<div class="panels"></div>' +
-      '<div style="background:#fff;padding:10px 14px 4px;border-top:1px solid var(--rule)"><div class="phead" style="margin-bottom:4px"><span class="pname"></span>' +
-      '<span class="legend-i" style="margin-left:14px"><i style="background:' + BLUE + '"></i></span><span class="legend-i" style="margin-left:10px"><i style="background:' + ORANGE + '"></i></span></div><svg role="img"></svg></div>' +
+      CH.map(function (spec) {
+        var leg = spec.series ? spec.series.map(function (x) { var col = x.side ? ORANGE : BLUE;
+            return '<span class="legend-i" style="margin-left:14px"><i style="background:' + (x.dash ? 'repeating-linear-gradient(90deg,' + col + ' 0 4px,transparent 4px 7px)' : col) + '"></i>' + x.name + '</span>'; }).join("")
+          : '<span class="legend-i" style="margin-left:14px"><i style="background:' + BLUE + '"></i>' + D.names.left[0] + '</span><span class="legend-i" style="margin-left:10px"><i style="background:' + ORANGE + '"></i>' + D.names.right[0] + '</span>';
+        return '<div class="chartbox" style="background:#fff;padding:10px 14px 4px;border-top:1px solid var(--rule)"><div class="phead" style="margin-bottom:4px;flex-wrap:wrap"><span class="pname"></span>' + leg + '</div><svg role="img"></svg></div>'; }).join("") +
       '<div class="status"></div>';
     var btns = root.querySelectorAll("button"), play = btns[0], scrub = root.querySelector("input"), sel = root.querySelector("select");
     var clock = root.querySelector('[data-r="clock"]'), status = root.querySelector(".status"), panels = root.querySelector(".panels");
     var startSpeed = D.speed || (TMAX > 40 ? 4 : TMAX > 10 ? 1 : 0.5); sel.value = String(startSpeed);
-    root.querySelector(".phead .pname").textContent = D.chart.label[0].toUpperCase() + D.chart.label.slice(1);
-    var li = root.querySelectorAll(".legend-i"); li[0].appendChild(document.createTextNode(D.names.left[0])); li[1].appendChild(document.createTextNode(D.names.right[0]));
+    root.querySelectorAll(".chartbox").forEach(function (box, j) {
+      box.querySelector(".pname").textContent = CH[j].label[0].toUpperCase() + CH[j].label.slice(1);
+    });
     var cv = [], out = [];
     [D.names.left, D.names.right].forEach(function (nm, k) {
       var p = document.createElement("div"); p.className = "panel";
@@ -116,41 +120,58 @@
     function cells(k, list) { var e = out[k]; if (!e.firstChild) list.forEach(function () { var d = document.createElement("div"); d.className = "ro"; d.innerHTML = '<span class="k"></span><span class="v"></span>'; e.appendChild(d); });
       list.forEach(function (r, j) { e.children[j].firstChild.textContent = r[0]; e.children[j].lastChild.textContent = r[1]; }); }
 
-    // the chart
-    var svg = root.querySelector("svg"), NS = "http://www.w3.org/2000/svg", Wc = 760, Hc = 240, L = 64, Rm = 70, T = 10, Bm = 38;
-    svg.setAttribute("viewBox", "0 0 " + Wc + " " + Hc); svg.style.width = "100%"; svg.style.height = "auto"; svg.style.display = "block";
-    var X = function (t) { return L + t / TMAX * (Wc - L - Rm); }, Y = function (v) { return T + (1 - v / TOTAL) * (Hc - T - Bm); };
-    function el(tag, at, txt) { var e = document.createElementNS(NS, tag); for (var k in at) e.setAttribute(k, at[k]); if (txt != null) e.textContent = txt; svg.appendChild(e); return e; }
-    [0, TOTAL / 2, TOTAL].forEach(function (v) { el("line", { x1: L, x2: Wc - Rm, y1: Y(v), y2: Y(v), stroke: "#e8e8e8" }); el("text", { x: L - 8, y: Y(v) + 4, "text-anchor": "end", "font-size": 12, fill: "#828282" }, n(v)); });
-    var tick = [0.5, 1, 2, 5, 10, 20].filter(function (x) { return TMAX / x <= 10; })[0] || 20;
-    for (var tt = 0; tt <= TMAX + 1e-9; tt += tick) el("text", { x: X(tt), y: Hc - Bm + 18, "text-anchor": "middle", "font-size": 12, fill: "#828282" }, +tt.toFixed(1));
-    el("text", { x: (L + Wc - Rm) / 2, y: Hc - 4, "text-anchor": "middle", "font-size": 12, fill: "#424242" }, "seconds");
-    el("line", { x1: L, x2: Wc - Rm, y1: Y(0), y2: Y(0), stroke: "#424242" });
-    function curve(F, upto) { var d = "M" + X(0) + "," + Y(0), k, prev = 0; for (k = 0; k < F.length && F[k] <= upto; k++) { d += "L" + X(F[k]).toFixed(1) + "," + Y(prev).toFixed(1) + "L" + X(F[k]).toFixed(1) + "," + Y(k + 1).toFixed(1); prev = k + 1; } return d + "L" + X(upto).toFixed(1) + "," + Y(prev).toFixed(1); }
-    var path = [el("path", { fill: "none", stroke: BLUE, "stroke-width": 2 }), el("path", { fill: "none", stroke: ORANGE, "stroke-width": 2 })];
-    var cl = el("line", { y1: T, y2: Y(0), stroke: "#424242", "stroke-dasharray": "3 3" });
-    var lab = [el("text", { "font-size": 12.5, fill: "#111" }, D.names.left[0]), el("text", { "font-size": 12.5, fill: "#111" }, D.names.right[0])];
-    var hit = el("rect", { x: L, y: T, width: Wc - L - Rm, height: Hc - T - Bm, fill: "transparent", style: "cursor:crosshair" });
+    // the charts: what each side has finished so far, on the same clock
+    var NS = "http://www.w3.org/2000/svg", Wc = 760, Hc = CH.length > 1 ? 200 : 240, L = 64, Rm = 70, T = 10, Bm = 38;
+    var X = function (t) { return L + t / TMAX * (Wc - L - Rm); };
+    var charts = Array.prototype.map.call(root.querySelectorAll(".chartbox svg"), function (svg, j) {
+      var spec = CH[j], TOT = spec.total;
+      var SER = spec.series || [{ side: 0, times: spec.left, name: D.names.left[0] }, { side: 1, times: spec.right, name: D.names.right[0] }];
+      var Y = function (v) { return T + (1 - v / TOT) * (Hc - T - Bm); };
+      svg.setAttribute("viewBox", "0 0 " + Wc + " " + Hc); svg.style.width = "100%"; svg.style.height = "auto"; svg.style.display = "block";
+      function el(tag, at, txt) { var e = document.createElementNS(NS, tag); for (var k in at) e.setAttribute(k, at[k]); if (txt != null) e.textContent = txt; svg.appendChild(e); return e; }
+      [0, TOT / 2, TOT].forEach(function (v) { el("line", { x1: L, x2: Wc - Rm, y1: Y(v), y2: Y(v), stroke: "#e8e8e8" }); el("text", { x: L - 8, y: Y(v) + 4, "text-anchor": "end", "font-size": 12, fill: "#828282" }, n(v)); });
+      var tick = [0.5, 1, 2, 5, 10, 20].filter(function (x) { return TMAX / x <= 10; })[0] || 20;
+      for (var tt = 0; tt <= TMAX + 1e-9; tt += tick) el("text", { x: X(tt), y: Hc - Bm + 18, "text-anchor": "middle", "font-size": 12, fill: "#828282" }, +tt.toFixed(1));
+      el("text", { x: (L + Wc - Rm) / 2, y: Hc - 4, "text-anchor": "middle", "font-size": 12, fill: "#424242" }, "seconds");
+      el("line", { x1: L, x2: Wc - Rm, y1: Y(0), y2: Y(0), stroke: "#424242" });
+      function curve(F, upto) { var d = "M" + X(0) + "," + Y(0), k, prev = 0; for (k = 0; k < F.length && F[k] <= upto; k++) { d += "L" + X(F[k]).toFixed(1) + "," + Y(prev).toFixed(1) + "L" + X(F[k]).toFixed(1) + "," + Y(k + 1).toFixed(1); prev = k + 1; } return d + "L" + X(upto).toFixed(1) + "," + Y(prev).toFixed(1); }
+      var path = SER.map(function (x) { var a = { fill: "none", stroke: x.side ? ORANGE : BLUE, "stroke-width": 2 }; if (x.dash) a["stroke-dasharray"] = "5 4"; return el("path", a); });
+      var cl = el("line", { y1: T, y2: Y(0), stroke: "#424242", "stroke-dasharray": "3 3" });
+      var lab = spec.series ? [] : [el("text", { "font-size": 12.5, fill: "#111" }, D.names.left[0]), el("text", { "font-size": 12.5, fill: "#111" }, D.names.right[0])];
+      var hit = el("rect", { x: L, y: T, width: Wc - L - Rm, height: Hc - T - Bm, fill: "transparent", style: "cursor:crosshair" });
+      hit.addEventListener("mousemove", function (ev) { var r = svg.getBoundingClientRect(), x = (ev.clientX - r.left) / r.width * Wc; setPlaying(false); st.t = Math.max(0, Math.min(TMAX, (x - L) / (Wc - L - Rm) * TMAX)); render(); });
+      return function (t) {                     // draws up to t; returns each series' count
+        var c = SER.map(function (x) { return bs(x.times, Math.min(t, SEC[x.side])); });
+        SER.forEach(function (x, q) { var tk = Math.min(t, SEC[x.side]); path[q].setAttribute("d", curve(x.times, tk)); });
+        lab.forEach(function (e, k) { var tk = Math.min(t, SEC[k]); e.setAttribute("x", X(tk) + 6); e.setAttribute("y", Y(c[k]) + 4 + (k === 0 && Math.abs(Y(c[0]) - Y(c[1])) < 13 ? 13 : 0)); });
+        cl.setAttribute("x1", X(t)); cl.setAttribute("x2", X(t));
+        return c;
+      };
+    });
 
     var st = { t: 0, playing: false, last: 0, speed: startSpeed };
     function render(fromScrub) {
-      var t = st.t, cnt = [];
+      var t = st.t, counts = charts.map(function (f) { return f(t); });
       clock.textContent = t.toFixed(TMAX >= 20 ? 1 : 2);
       if (!fromScrub) scrub.value = String(Math.round(t / TMAX * 1000));
       [0, 1].forEach(function (k) {
-        var tk = Math.min(t, SEC[k]), rows = S[k].kind === "rows" ? drawRows(k, tk) : drawTree(k, tk), c = bs(FIN[k], tk);
-        cnt.push(c);
-        var cl_ = [[D.chart.label.split(",")[0], n(c) + " of " + n(TOTAL)], rows[0], ["tokens generated (run total)", n(D.tokens[k ? "right" : "left"])], ["finished at", t >= SEC[k] ? SEC[k].toFixed(SEC[k] >= 20 ? 1 : 2) + " s" : "–"]];
-        if (rows[2]) cl_.splice(2, 0, rows[2]);
+        var tk = Math.min(t, SEC[k]), rows = S[k].kind === "rows" ? drawRows(k, tk) : drawTree(k, tk);
+        var cl_ = [];
+        CH.forEach(function (spec, j) {
+          if (spec.series) spec.series.forEach(function (x, q) { if (x.side === k) cl_.push([x.metric, n(counts[j][q]) + " of " + n(spec.total)]); });
+          else cl_.push([spec.label.split(",")[0], n(counts[j][k]) + " of " + n(spec.total)]);
+        });
+        cl_.push(rows[0]);
+        if (rows[2]) cl_.push(rows[2]);
+        cl_.push(["tokens generated (run total)", n(D.tokens[k ? "right" : "left"])], ["finished at", t >= SEC[k] ? SEC[k].toFixed(SEC[k] >= 20 ? 1 : 2) + " s" : "–"]);
         cells(k, cl_);
-        path[k].setAttribute("d", curve(FIN[k], tk));
-        lab[k].setAttribute("x", X(tk) + 6); lab[k].setAttribute("y", Y(c) + 4 + (k === 0 && Math.abs(Y(cnt[0]) - Y(bs(FIN[1], Math.min(t, SEC[1])))) < 13 ? 13 : 0));
       });
-      cl.setAttribute("x1", X(t)); cl.setAttribute("x2", X(t));
-      var nm = [D.names.left[0], D.names.right[0]], lbl = D.chart.label.split(",")[0];
+      var nm = [D.names.left[0], D.names.right[0]];
       status.textContent = t >= TMAX - 1e-9
         ? nm[1] + " finished in " + SEC[1].toFixed(SEC[1] >= 20 ? 1 : 2) + " s, " + nm[0] + " in " + SEC[0].toFixed(SEC[0] >= 20 ? 1 : 2) + " s."
-        : "At " + t.toFixed(TMAX >= 20 ? 1 : 2) + " s, " + lbl + ": " + nm[0] + " " + n(cnt[0]) + ", " + nm[1] + " " + n(cnt[1]) + " of " + n(TOTAL) + "." +
+        : "At " + t.toFixed(TMAX >= 20 ? 1 : 2) + " s: " + CH.map(function (spec, j) {
+            if (spec.series) return spec.series.map(function (x, q) { return x.name + " " + n(counts[j][q]); }).join(", ") + " of " + n(spec.total);
+            return spec.label.split(",")[0] + ", " + nm[0] + " " + n(counts[j][0]) + " and " + nm[1] + " " + n(counts[j][1]) + " of " + n(spec.total); }).join("; ") + "." +
           (t >= SEC[1] ? " " + nm[1] + " finished at " + SEC[1].toFixed(SEC[1] >= 20 ? 1 : 2) + " s." : "");
     }
     function setPlaying(on) { st.playing = on; play.textContent = on ? "Pause" : (st.t >= TMAX ? "Replay" : "Play"); if (on) { st.last = performance.now(); requestAnimationFrame(step); } }
@@ -159,7 +180,6 @@
     btns[1].addEventListener("click", function () { st.t = 0; setPlaying(false); render(); });
     scrub.addEventListener("input", function () { setPlaying(false); st.t = Number(scrub.value) / 1000 * TMAX; render(true); });
     sel.addEventListener("change", function () { st.speed = Number(sel.value); });
-    hit.addEventListener("mousemove", function (ev) { var r = svg.getBoundingClientRect(), x = (ev.clientX - r.left) / r.width * Wc; setPlaying(false); st.t = Math.max(0, Math.min(TMAX, (x - L) / (Wc - L - Rm) * TMAX)); render(); });
     function size() { geo = cv.map(fit); render(true); }
     addEventListener("resize", size); size();
     return { set: function (t) { st.t = t; render(); } };
