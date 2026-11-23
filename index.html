@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Banyan</title>
-<link rel="stylesheet" href="style.css?v=2973f821">
+<link rel="stylesheet" href="style.css?v=543c239d">
 </head>
 <body>
 <header class="site-header"><div class="wrapper">
@@ -55,16 +55,17 @@ everything it generated as one tree of tokens, in which samples that begin the s
 <h2>Measurements</h2>
 <p>Each application is an existing method run on Banyan with its algorithm unchanged, against its reference
 implementation, on the same model and one NVIDIA H100 PCIe.</p>
-<table>
-  <thead><tr><th>Application</th><th>Model</th><th>Compared with</th><th class="num">Reference</th><th class="num">Banyan</th><th class="num">Speed</th></tr></thead>
+<table class="meas">
+  <colgroup><col style="width:46%"><col style="width:22%"><col><col><col></colgroup>
+  <thead><tr><th>Application</th><th>Compared with</th><th class="num">Reference</th><th class="num">Banyan</th><th class="num">Speed</th></tr></thead>
   <tbody>
-    <tr><th colspan="6" class="group">Sampling workloads</th></tr>
-    <tr><td><a href="sampling.html">10,000 samples of one prompt</a></td><td>Qwen3-8B</td><td>vLLM <code>generate(n=10000)</code></td><td class="num">85.4 s</td><td class="num">20.8 s</td><td class="num">4.1×</td></tr>
-    <tr><td><a href="tofu.html">Leak rate after unlearning, 8 questions × 1,024 answers, judged</a></td><td>Llama-3.2-1B</td><td>vLLM batched sampling, then the judge</td><td class="num">7.0 s</td><td class="num">4.8 s</td><td class="num">1.5×</td></tr>
-    <tr><td><a href="risk.html">Harmful-answer rate (Angell et al.), one request, 1,000 steered samples, judged</a></td><td>Llama-3.2-1B</td><td>authors' code (HF transformers)</td><td class="num">34.5 s</td><td class="num">17.7–22.5 s</td><td class="num">1.5–2.0×</td></tr>
-    <tr><th colspan="6" class="group">Search workloads</th></tr>
-    <tr><td><a href="search.html">Reasoning by tree search (rStar-Math), 16 questions</a></td><td>Qwen3-8B</td><td>authors' code on vLLM</td><td class="num">532 s</td><td class="num">115 s</td><td class="num">4.6×</td></tr>
-    <tr><td><a href="jailbreak.html">Jailbreak search (BOA), one request, 600 s</a></td><td>Llama-3.1-8B</td><td>authors' code</td><td class="num">4,641 nodes scored</td><td class="num">97,636 nodes scored</td><td class="num">21×</td></tr>
+    <tr><th colspan="5" class="group">Sampling workloads</th></tr>
+    <tr><td><a href="sampling.html">10,000 samples of one prompt</a><span class="sub">Qwen3-8B · one GSM8K question</span></td><td>vLLM <code>generate(n=10000)</code></td><td class="num">85.4 s</td><td class="num">20.8 s</td><td class="num"><b>4.1×</b></td></tr>
+    <tr><td><a href="tofu.html">Leak rate after unlearning</a><span class="sub">Llama-3.2-1B · 8 questions × 1,024 answers, judged</span></td><td>vLLM, then the judge</td><td class="num">7.0 s</td><td class="num">4.8 s</td><td class="num"><b>1.5×</b></td></tr>
+    <tr><td><a href="risk.html">Harmful-answer rate (Angell et al.)</a><span class="sub">Llama-3.2-1B · one request, 1,000 steered samples, judged</span></td><td>authors' code (HF)</td><td class="num">34.5 s</td><td class="num">17.7–22.5 s</td><td class="num"><b>1.5–2.0×</b></td></tr>
+    <tr><th colspan="5" class="group">Search workloads</th></tr>
+    <tr><td><a href="search.html">Reasoning by tree search (rStar-Math)</a><span class="sub">Qwen3-8B · 16 questions</span></td><td>authors' code (vLLM)</td><td class="num">532 s</td><td class="num">115 s</td><td class="num"><b>4.6×</b></td></tr>
+    <tr><td><a href="jailbreak.html">Jailbreak search (BOA)</a><span class="sub">Llama-3.1-8B · one request, 600 s; nodes scored</span></td><td>authors' code</td><td class="num">4,641</td><td class="num">97,636</td><td class="num"><b>21×</b></td></tr>
   </tbody>
 </table>
 <p class="small">One run per side, from the use-case pages: the sampling rows were measured for this site (2026-11-22), the search rows

@@ -97,3 +97,7 @@ ul.points li b { color: var(--text); font-weight: 600; }
 @media (max-width: 640px) { ul.points li { grid-template-columns: 1fr; gap: 2px; } }
 .markkey { background: #fff; border-top: 1px solid var(--rule); padding: 8px 14px; font-size: 13.5px; color: var(--ink-2); display: flex; align-items: center; gap: 8px; }
 .markkey .dot { width: 9px; height: 9px; border-radius: 50%; background: #111; box-shadow: 0 0 0 2px #fff, 0 0 0 3px #e8e8e8; flex: none; }
+table.meas td { vertical-align: top; }
+table.meas td .sub { display: block; font-size: 13px; color: var(--muted); line-height: 1.4; margin-top: 2px; }
+table.meas td.num, table.meas th.num { white-space: nowrap; }
+table.meas code { font-size: 12.5px; }
