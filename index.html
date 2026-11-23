@@ -34,7 +34,7 @@ everything it generated as one tree of tokens, in which samples that begin the s
   <a href="search.html"><canvas id="s-search"></canvas>Reasoning by tree search<span>532 s → 115 s</span></a>
   <a href="jailbreak.html"><canvas id="s-jailbreak"></canvas>Jailbreak search<span>22,193 → 1,021,692 nodes</span></a>
 </div>
-<p class="small" style="margin-top:8px">The prompt is at the centre; the distance from it is the token position.</p>
+<p class="small" style="margin-top:8px">Each picture is the finished tree of one stored run: the prompt is on the left edge (or at the centre) and the distance from it is the token position.</p>
 
 <h2>What Banyan provides</h2>
 <ul>
@@ -81,19 +81,24 @@ These are the small configurations of our evaluation.</p>
 (function () {
   // pages on the replay component carry segments; the older pages carry dots (viz.js)
   var DPR = Math.min(window.devicePixelRatio || 1, 2), ORANGE = "#eb6834";
-  function seg(cv, s) {
+  function seg(cv, s, horizontal) {             // the finished tree, as the page draws it (horizontal or radial)
     var w = cv.clientWidth || 200; cv.width = w * DPR; cv.height = w * DPR; cv.style.height = w + "px";
-    var c = cv.getContext("2d"), cx = cv.width / 2, cy = cv.height / 2, deep = 1;
+    var c = cv.getContext("2d"), cx = cv.width / 2, cy = cv.height / 2, deep = 1, pad = 4 * DPR;
     s.seg.forEach(function (g) { deep = Math.max(deep, g[2] + g[4].length); });
-    var rs = (cv.width / 2 - 4 * DPR) / deep, ang = function (x) { return -Math.PI / 2 + 2 * Math.PI * x / s.units; };
+    var rs = (cv.width / 2 - pad) / deep, xs = (cv.width - 2 * pad) / deep, hh = cv.height - 2 * pad;
+    var P = horizontal ? function (d, x) { return [pad + d * xs, pad + x / s.units * hh]; }
+                       : function (d, x) { var a = -Math.PI / 2 + 2 * Math.PI * x / s.units; return [cx + Math.cos(a) * d * rs, cy + Math.sin(a) * d * rs]; };
     c.strokeStyle = ORANGE;
-    s.seg.forEach(function (g) { var a = ang(g[0]), pa = ang(g[1]), r0 = g[2] * rs, r1 = (g[2] + g[4].length) * rs;
+    s.seg.forEach(function (g) { var p0 = P(g[2], g[0]), p1 = P(g[2] + g[4].length, g[0]);
       c.globalAlpha = g[3] > 1 ? 0.85 : 0.45; c.lineWidth = Math.max(0.5, 0.45 * DPR) + 5 * DPR * Math.sqrt(g[3] / s.units); c.beginPath();
-      if (r0 > 0 && Math.abs(a - pa) > 1e-6) c.arc(cx, cy, r0, Math.min(a, pa), Math.max(a, pa));
-      c.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0); c.lineTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1); c.stroke(); });
+      if (g[2] > 0 && Math.abs(g[0] - g[1]) > 1e-6) {
+        if (horizontal) { var q = P(g[2], g[1]); c.moveTo(q[0], q[1]); c.lineTo(p0[0], p0[1]); }
+        else { var a = -Math.PI / 2 + 2 * Math.PI * g[0] / s.units, pa = -Math.PI / 2 + 2 * Math.PI * g[1] / s.units; c.arc(cx, cy, g[2] * rs, Math.min(a, pa), Math.max(a, pa)); }
+      }
+      c.moveTo(p0[0], p0[1]); c.lineTo(p1[0], p1[1]); c.stroke(); });
   }
   function draw() {
-    ["sampling", "tofu", "dle"].forEach(function (k) { seg(document.getElementById("s-" + k), window.RUNS[k].sides.right); });
+    ["sampling", "tofu", "dle"].forEach(function (k) { seg(document.getElementById("s-" + k), window.RUNS[k].sides.right, window.RUNS[k].layout === "h"); });
     ["risk", "search", "jailbreak"].forEach(function (k) { Banyan.still(document.getElementById("s-" + k), window.RUNS[k].right); });
   }
   draw();
