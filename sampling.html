@@ -32,6 +32,11 @@ and light once it is written. Right: Banyan's tree, top to bottom in text order 
 next to each other; a line's width is the number of samples through it, and where samples split the line branches
 downwards. Hover the chart to move the clock.</p>
 
+<p class="small">Why vLLM starts late: in a separate run with the same settings, vLLM spent the first 0.25 s creating the 10,000
+requests, produced its first token at 0.35 s, and had all 1,024 rows producing tokens from 0.80 s on (about 58 ms per
+step after that). How long this start takes varies between runs: in the run shown above, vLLM reached its steady pace
+later, at about 2 s. Banyan has no such start: its rows are in the tree from the first step.</p>
+
 <h3>Setup</h3>
 <table class="setup" id="setup"></table>
 
