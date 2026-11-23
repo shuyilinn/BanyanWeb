@@ -14,7 +14,7 @@
 
 <main class="page-content"><div class="wrapper">
 <h2 style="margin-top:6px">Use cases</h2>
-<p>Six applications written on Banyan, in two kinds of workload. Each page describes the method and replays a baseline
+<p>Five applications written on Banyan, in two kinds of workload. Each page describes the method and replays a baseline
 run (left) and a Banyan run (right) side by side.</p>
 
 <h3 id="sampling-workloads">Sampling workloads</h3>
@@ -32,7 +32,6 @@ computed once.</p>
 environment in the loop. The reference implementations send each step to the engine as new requests; Banyan runs the
 search inside one tree on the GPU and keeps the batch full.</p>
 <ul class="cases">
-  <li><a class="t" href="dle.html">Truncated decoding trees</a><p>Enumerate a question's 32 most likely distinct answers: the paper's algorithm on vLLM's requests against the same search on Banyan's tree.</p><span class="x">6.4 s → 2.6 s</span></li>
   <li><a class="t" href="search.html">Reasoning by tree search</a><p>rStar-Math's Monte Carlo tree search with code execution, against the authors' implementation.</p><span class="x">532 s → 115 s</span></li>
   <li><a class="t" href="jailbreak.html">Jailbreak search</a><p>BOA's search for a jailbreak among a model's likely responses, 600 seconds, against the authors' implementation.</p><span class="x">22,193 → 1,021,692 nodes</span></li>
 </ul>
