@@ -26,6 +26,7 @@
       '<input type="range" min="0" max="1000" value="0" step="1" aria-label="Time in the runs">' +
       '<label>speed <select><option value="0.25">¼×</option><option value="0.5">½×</option><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option><option value="8">8×</option></select></label></div>' +
       '<div class="panels"></div>' +
+      (D.marked ? '<div class="markkey"><span class="dot"></span>' + (D.markedLegend || D.marked) + '</div>' : '') +
       CH.map(function (spec) {
         var leg = spec.series ? spec.series.map(function (x) { var col = x.side ? ORANGE : BLUE;
             return '<span class="legend-i" style="margin-left:14px"><i style="background:' + (x.dash ? 'repeating-linear-gradient(90deg,' + col + ' 0 4px,transparent 4px 7px)' : col) + '"></i>' + x.name + '</span>'; }).join("")
