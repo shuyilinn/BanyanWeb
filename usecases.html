@@ -21,6 +21,8 @@ the baseline on the left, Banyan on the right. Banyan's tree can be replayed in 
   <li><a class="t" href="sampling.html">Many samples per prompt</a><p>1,000 samples of one prompt: 1,000 separate rows in vLLM, one tree in Banyan.</p></li>
   <li><a class="t" href="search.html">Reasoning by tree search</a><p>rStar-Math's Monte Carlo tree search with code execution, against the authors' implementation.</p></li>
   <li><a class="t" href="jailbreak.html">Jailbreak search</a><p>BOA's search for a jailbreak among a model's likely responses, 600 seconds, against the authors' implementation.</p></li>
+  <li><a class="t" href="tofu.html">Did the model forget? Leak rate after unlearning</a><p>1,024 judged answers per question for a model trained to forget, against vLLM's batched sampling and the same judge.</p></li>
+  <li><a class="t" href="dle.html">Truncated decoding trees</a><p>The paper's leaf enumeration on vLLM's requests against the same search on Banyan's tree.</p></li>
 </ul>
 </div></main>
 

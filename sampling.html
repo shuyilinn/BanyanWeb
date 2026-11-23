@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Banyan: many samples per prompt</title>
+<title>Banyan: Many samples per prompt</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -24,162 +24,38 @@ sides draw 10,000 samples from Qwen3-8B for one GSM8K question, with the same de
 row and every row writes every one of its tokens. Right, Banyan computes them as a tree: samples that start with the
 same tokens share those nodes, and a node is written once however many samples pass through it. Below, the samples
 each side has finished so far.</p>
-<div class="stage">
-  <div class="clockbar"><button class="btn primary" type="button" id="play">Play</button><button class="btn" type="button" id="restart">Restart</button>
-    <div class="clock"><span id="clock">0.0</span><span class="u"> s</span></div>
-    <input type="range" id="scrub" min="0" max="1000" value="0" step="1" aria-label="Time in the runs">
-    <label>speed <select id="speed"><option value="1">1×</option><option value="2">2×</option><option value="4" selected>4×</option><option value="8">8×</option></select></label></div>
-  <div class="panels">
-    <div class="panel">
-      <div class="phead"><span class="sq" style="background:#2a78d6"></span><span class="pname">vLLM</span><span class="psub">10,000 rows · batch size 1,024 rows</span></div>
-      <canvas id="rows"></canvas>
-      <div class="readout" id="rowsOut"></div>
-    </div>
-    <div class="panel">
-      <div class="phead"><span class="sq" style="background:#eb6834"></span><span class="pname">Banyan</span><span class="psub">one tree · batch size up to 432 rows</span></div>
-      <canvas id="tree"></canvas>
-      <div class="readout" id="treeOut"></div>
-    </div>
-  </div>
-  <div style="background:#fff;padding:10px 14px 4px;border-top:1px solid var(--rule)">
-    <div class="phead" style="margin-bottom:4px"><span class="pname">Samples finished</span>
-      <span class="legend-i" style="margin-left:14px"><i style="background:#2a78d6"></i>vLLM</span><span class="legend-i" style="margin-left:10px"><i style="background:#eb6834"></i>Banyan</span></div>
-    <svg id="chart" role="img" aria-label="Samples finished over time, vLLM and Banyan"></svg></div>
-  <div class="status" id="status"></div>
-</div>
-<p class="small">Everything moves on the measured times. The prompt is at the centre of each circle and the distance from it
-is the token position (the dashed ring is the 128-token limit). Left: each of vLLM's 10,000 samples is one line, drawn
-darker while it is being written; vLLM writes up to 1,024 rows at once (its <code>max_num_seqs</code>). Right: Banyan writes up to
-432 rows of its tree at once (its measured best batch size for this model and card). In Banyan's tree a line's width is the number of samples through it. Both are
-ordered around the circle by the samples' text, so samples that begin the same way are next to each other. Hover the
-chart to move the clock.</p>
+<div class="stage" id="stage"></div>
+<p class="small">The prompt is at the centre of each circle and the distance from it is the token position (the dashed ring is the 128-token limit). Left: each of vLLM's 10,000 samples is one line, darker while it is being written. Right: Banyan's tree; a line's width is the number of samples through it. Both are
+ordered around the circle by text, so outputs that begin the same way are next to each other. Hover the chart to move
+the clock.</p>
 
 <h3>Setup</h3>
 <table class="setup" id="setup"></table>
 
 <h3>How this was measured</h3>
 <dl class="how">
-  <dt>vLLM</dt><dd><code>generate()</code> is called unchanged. Two wrappers in vLLM's output processor note, at every engine step,
-  the time and which rows got a token, and when each sample finished. A row gets at most one token per step; the left
-  circle is drawn from these records, including the steps in which vLLM paused a row.</dd>
-  <dt>vLLM's batch</dt><dd>The page shows vLLM at the evaluation baseline's setting, 1,024 rows at once (<code>max_num_seqs</code>).
-  At that setting its KV cache was about half used, so it was also run with more rows at once; the total time hardly
-  changes: <span id="sweep"></span></dd>
-  <dt>Banyan</dt><dd>The algorithm is the evaluation's sampling application with n = 10,000. The measurement notes the time each
-  node of the tree was made (the runtime's own new-node callback) and, with a <code>@judge</code> on the user API, when samples
-  finished; the right circle is drawn from these.</dd>
-  <dt>the cost of noting</dt><dd>Each side ran the timed prompt twice, with and without noting the times: <span id="plainTimes"></span>.
-  The chart and the times above are the runs with notes.</dd>
-  <dt>records</dt><dd>Scripts in <code>demo/measure/</code>; results, vLLM's 10,000 outputs and the logs in
-  <code>experiments/demo_checks/sampling10k_tokens/</code>; Banyan's tree in its run directory.</dd>
+  <dt>vLLM</dt><dd><code>generate()</code> is called unchanged. Two wrappers in vLLM's output processor note, at every engine step, the time and
+  which rows got a token, and when each sample finished. A row gets at most one token per step.</dd>
+  <dt>vLLM's batch size</dt><dd>The page shows vLLM at the evaluation baseline's setting, 1,024 rows at once (<code>max_num_seqs</code>). Its KV cache was
+  then about half used, so it was also run with more rows at once; the total time hardly changes: <span data-fill="D.sweep.map(function (x) { return n(x.seqs) + ' rows at GPU memory ' + x.mem + ': ' + x.timed.toFixed(1) + ' s'; }).join('; ') + '; 4,096 and 10,000 rows at GPU memory 0.9 ran out of memory.'"></span></dd>
+  <dt>Banyan</dt><dd>The algorithm is the evaluation's application on the user API. The measurement notes the time each node of the tree
+  was made (the runtime's own new-node callback, no change to the system), and, with a <code>@judge</code> on the user API, when samples finished.</dd>
+  <dt>the cost of noting</dt><dd>Each side ran the timed part twice, with and without the notes: vLLM <span data-fill="D.plain.left.toFixed(2) + ' s without, ' + D.seconds.left.toFixed(2) + ' s with'"></span>;
+  Banyan <span data-fill="D.plain.right.toFixed(2) + ' s without, ' + D.seconds.right.toFixed(2) + ' s with'"></span>. The replay uses the runs with notes.</dd>
 </dl>
 </div></main>
 
 <footer class="site-footer"><div class="wrapper">Banyan is a research system under development.</div></footer>
 
 <script src="data/sampling.js"></script>
+<script src="replay.js"></script>
 <script>
 (function () {
-  "use strict";
-  var D = window.RUNS.sampling, N = D.n, BLUE = "#2a78d6", ORANGE = "#eb6834", DPR = Math.min(window.devicePixelRatio || 1, 2);
-  var V = D.totals.vllm, B = D.totals.banyan, TMAX = Math.max(V.seconds, B.seconds), RING = 128;
-  var n = function (x) { return Math.round(x).toLocaleString("en-US"); };
-  function bs(arr, t) { var lo = 0, hi = arr.length; while (lo < hi) { var m = (lo + hi) >> 1; if (arr[m] <= t) lo = m + 1; else hi = m; } return lo; }
+  var D = window.RUNS["sampling"], n = Replay.n;
   document.getElementById("prompt").textContent = D.prompt;
-  var STEP = D.rows.step, RUNS = D.rows.runs, LEN = D.rows.len;
-  var made = []; D.seg.forEach(function (s) { for (var k = 0; k < s[4].length; k++) made.push(s[4][k]); }); made.sort(function (a, b) { return a - b; });
-  var FV = D.finish.vllm, FB = D.finish.banyan;
-
-  // ---- the two circles
-  var cvR = document.getElementById("rows"), cvT = document.getElementById("tree"), geo = {};
-  function fit(cv) { var w = cv.clientWidth || 300; cv.width = Math.round(w * DPR); cv.height = Math.round(w * 0.94 * DPR); cv.style.height = Math.round(w * 0.94) + "px";
-    return { W: cv.width, H: cv.height, cx: cv.width / 2, cy: cv.height / 2, rs: (Math.min(cv.width, cv.height) / 2 - 8 * DPR) / (RING * 1.05) }; }
-  var ang = function (s) { return -Math.PI / 2 + 2 * Math.PI * s / N; };
-  function ring(c, g) { c.clearRect(0, 0, g.W, g.H); c.setLineDash([3 * DPR, 4 * DPR]); c.strokeStyle = "#cfcbc1"; c.lineWidth = DPR; c.beginPath(); c.arc(g.cx, g.cy, RING * g.rs, 0, 6.2832); c.stroke(); c.setLineDash([]); }
-  function drawRows(t) {
-    var g = geo.r, c = cvR.getContext("2d"), k = bs(STEP, t) - 1, i, written = 0, done = [], live = [], paused = [];
-    ring(c, g);
-    for (i = 0; i < N; i++) {
-      var ru = RUNS[i], L = 0, on = false;
-      for (var q = 0; q < ru.length; q += 2) { var got = k - ru[q] + 1; if (got > 0) { L += Math.min(got, ru[q + 1]); if (got <= ru[q + 1]) on = true; } }
-      written += L; if (L > 0) (L >= LEN[i] ? done : (on ? live : paused)).push(i, L);
-    }
-    c.lineWidth = Math.max(0.6, 0.5 * DPR); c.strokeStyle = BLUE;
-    [[done, 0.12], [paused, 0.25], [live, 0.5]].forEach(function (p) { var arr = p[0]; c.globalAlpha = p[1]; c.beginPath();
-      for (var j = 0; j < arr.length; j += 2) { var a = ang(arr[j] + 0.5), r = arr[j + 1] * g.rs; c.moveTo(g.cx, g.cy); c.lineTo(g.cx + Math.cos(a) * r, g.cy + Math.sin(a) * r); } c.stroke(); });
-    c.globalAlpha = 1;
-    return { written: written, active: live.length / 2 };
-  }
-  function drawTree(t) {
-    var g = geo.t, c = cvT.getContext("2d"), i, segs = D.seg;
-    ring(c, g);
-    c.strokeStyle = ORANGE;
-    for (i = 0; i < segs.length; i++) {
-      var s = segs[i], m = bs(s[4], t); if (!m) continue;
-      var a = ang(s[0]), pa = ang(s[1]), r0 = s[2] * g.rs, r1 = (s[2] + m) * g.rs;
-      c.globalAlpha = s[3] > 1 ? 0.9 : 0.45; c.lineWidth = Math.max(0.6, 0.5 * DPR) + 7 * DPR * Math.sqrt(s[3] / N);
-      c.beginPath();
-      if (r0 > 0 && Math.abs(a - pa) > 1e-6) c.arc(g.cx, g.cy, r0, Math.min(a, pa), Math.max(a, pa));
-      c.moveTo(g.cx + Math.cos(a) * r0, g.cy + Math.sin(a) * r0); c.lineTo(g.cx + Math.cos(a) * r1, g.cy + Math.sin(a) * r1); c.stroke();
-    }
-    c.globalAlpha = 1;
-    return { written: bs(made, t) };
-  }
-  function cells(id, list) { var e = document.getElementById(id); if (!e.firstChild) list.forEach(function (r) { var d = document.createElement("div"); d.className = "ro"; d.innerHTML = '<span class="k"></span><span class="v"></span>'; d.firstChild.textContent = r[0]; e.appendChild(d); });
-    list.forEach(function (r, k) { e.children[k].lastChild.textContent = r[1]; }); }
-
-  // ---- the chart
-  var svg = document.getElementById("chart"), NS = "http://www.w3.org/2000/svg";
-  var Wc = 760, Hc = 250, L = 64, R = 70, T = 10, Bm = 38;
-  svg.setAttribute("viewBox", "0 0 " + Wc + " " + Hc); svg.style.width = "100%"; svg.style.height = "auto"; svg.style.display = "block";
-  var X = function (t) { return L + t / TMAX * (Wc - L - R); }, Y = function (v) { return T + (1 - v / N) * (Hc - T - Bm); };
-  function el(tag, at, txt) { var e = document.createElementNS(NS, tag); for (var k in at) e.setAttribute(k, at[k]); if (txt != null) e.textContent = txt; svg.appendChild(e); return e; }
-  [0, 5000, 10000].forEach(function (v) { el("line", { x1: L, x2: Wc - R, y1: Y(v), y2: Y(v), stroke: "#e8e8e8" }); el("text", { x: L - 8, y: Y(v) + 4, "text-anchor": "end", "font-size": 12, fill: "#828282" }, n(v)); });
-  for (var tt = 0; tt <= TMAX; tt += 10) el("text", { x: X(tt), y: Hc - Bm + 18, "text-anchor": "middle", "font-size": 12, fill: "#828282" }, tt);
-  el("text", { x: (L + Wc - R) / 2, y: Hc - 4, "text-anchor": "middle", "font-size": 12, fill: "#424242" }, "seconds");
-  el("line", { x1: L, x2: Wc - R, y1: Y(0), y2: Y(0), stroke: "#424242" });
-  function curve(F, upto) { var d = "M" + X(0) + "," + Y(0), k, prev = 0; for (k = 0; k < F.length && F[k] <= upto; k++) { d += "L" + X(F[k]).toFixed(1) + "," + Y(prev).toFixed(1) + "L" + X(F[k]).toFixed(1) + "," + Y(k + 1).toFixed(1); prev = k + 1; } return d + "L" + X(upto).toFixed(1) + "," + Y(prev).toFixed(1); }
-  var pv = el("path", { fill: "none", stroke: BLUE, "stroke-width": 2, "stroke-linejoin": "round" }), pb = el("path", { fill: "none", stroke: ORANGE, "stroke-width": 2, "stroke-linejoin": "round" });
-  var cl = el("line", { y1: T, y2: Y(0), stroke: "#424242", "stroke-dasharray": "3 3" });
-  var lv = el("text", { "font-size": 12.5, fill: "#111" }, "vLLM"), lb = el("text", { "font-size": 12.5, fill: "#111" }, "Banyan");
-  var hit = el("rect", { x: L, y: T, width: Wc - L - R, height: Hc - T - Bm, fill: "transparent", style: "cursor:crosshair" });
-
-  // ---- one clock
-  var st = { t: 0, playing: false, last: 0, speed: 4 }, scrub = document.getElementById("scrub"), play = document.getElementById("play");
-  function render(fromScrub) {
-    var t = st.t, r = drawRows(t), b = drawTree(t), fv = bs(FV, t), fb = bs(FB, t);
-    document.getElementById("clock").textContent = t.toFixed(1);
-    if (!fromScrub) scrub.value = String(Math.round(t / TMAX * 1000));
-    cells("rowsOut", [["samples finished", n(fv)], ["tokens written", n(r.written)], ["rows being written", n(r.active)], ["finished at", fv >= N ? V.seconds.toFixed(1) + " s" : "–"]]);
-    cells("treeOut", [["samples finished", n(fb)], ["tokens written (nodes)", n(b.written)], ["", ""], ["finished at", fb >= N ? B.seconds.toFixed(1) + " s" : "–"]]);
-    pv.setAttribute("d", curve(FV, t)); pb.setAttribute("d", curve(FB, t));
-    cl.setAttribute("x1", X(t)); cl.setAttribute("x2", X(t));
-    lv.setAttribute("x", X(t) + 6); lv.setAttribute("y", Y(fv) + (Math.abs(Y(fv) - Y(fb)) < 13 && fv < fb ? 14 : 4));
-    lb.setAttribute("x", X(Math.min(t, B.seconds)) + 6); lb.setAttribute("y", Y(fb) + (fb >= N ? 15 : 4));
-    document.getElementById("status").textContent = fv >= N
-      ? "Banyan finished all " + n(N) + " samples at " + B.seconds.toFixed(1) + " s, vLLM at " + V.seconds.toFixed(1) + " s."
-      : "At " + t.toFixed(1) + " s: vLLM has finished " + n(fv) + " samples, Banyan " + n(fb) + "." + (fb >= N ? " Banyan finished all " + n(N) + " at " + B.seconds.toFixed(1) + " s." : "");
-  }
-  function setPlaying(on) { st.playing = on; play.textContent = on ? "Pause" : (st.t >= TMAX ? "Replay" : "Play"); if (on) { st.last = performance.now(); requestAnimationFrame(tick); } }
-  function tick(now) { if (!st.playing) return; st.t += (now - st.last) / 1000 * st.speed; st.last = now; if (st.t >= TMAX) { st.t = TMAX; render(); setPlaying(false); return; } render(); requestAnimationFrame(tick); }
-  play.addEventListener("click", function () { if (st.t >= TMAX) st.t = 0; setPlaying(!st.playing); });
-  document.getElementById("restart").addEventListener("click", function () { st.t = 0; setPlaying(false); render(); });
-  scrub.addEventListener("input", function () { setPlaying(false); st.t = Number(scrub.value) / 1000 * TMAX; render(true); });
-  document.getElementById("speed").addEventListener("change", function (e) { st.speed = Number(e.target.value); });
-  hit.addEventListener("mousemove", function (ev) { var r = svg.getBoundingClientRect(), x = (ev.clientX - r.left) / r.width * Wc; setPlaying(false); st.t = Math.max(0, Math.min(TMAX, (x - L) / (Wc - L - R) * TMAX)); render(); });
-
-  // ---- setup and the vLLM settings tried
-  var su = document.getElementById("setup"), hr = document.createElement("tr");
-  ["", "vLLM", "Banyan"].forEach(function (x) { var th = document.createElement("th"); th.textContent = x; hr.appendChild(th); });
-  var thd = document.createElement("thead"); thd.appendChild(hr); su.appendChild(thd); var tb = document.createElement("tbody");
-  D.setup.forEach(function (r) { var tr = document.createElement("tr"); r.forEach(function (x, i) { var td = document.createElement(i ? "td" : "th"); td.textContent = x; tr.appendChild(td); }); tb.appendChild(tr); });
-  su.appendChild(tb);
-  document.getElementById("plainTimes").textContent = "vLLM " + V.seconds.toFixed(1) + " s with, " + V.plain.toFixed(1) + " s without; Banyan " + B.seconds.toFixed(1) + " s with, " + B.plain.toFixed(1) + " s without";
-  document.getElementById("sweep").textContent = D.sweep.map(function (x) { return n(x.seqs) + " rows at GPU memory " + x.mem + ": " + x.timed.toFixed(1) + " s"; }).join("; ") +
-    "; 4,096 and 10,000 rows at GPU memory 0.9 ran out of memory." + (D.rows.paused ? " In the run shown, vLLM paused " + n(D.rows.paused) + " rows for a while when its KV cache was full and resumed them later." : "");
-
-  function size() { geo.r = fit(cvR); geo.t = fit(cvT); render(true); }
-  addEventListener("resize", size); size();
+  Replay.mount(document.getElementById("stage"), D);
+  Replay.setup(document.getElementById("setup"), D);
+  document.querySelectorAll("[data-fill]").forEach(function (e) { e.textContent = new Function("D", "n", "return " + e.dataset.fill)(D, n); });
 })();
 </script>
 </body>

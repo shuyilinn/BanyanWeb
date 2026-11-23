@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Banyan: Did the model forget? Leak rate after unlearning</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header"><div class="wrapper">
+  <a class="site-title" href="index.html">Banyan</a>
+  <nav class="site-nav"><a href="index.html">Overview</a><a href="usecases.html" aria-current="page">Use cases</a></nav>
+</div></header>
+
+<main class="page-content"><div class="wrapper">
+<p class="back"><a href="usecases.html">← Use cases</a></p>
+<h2 style="margin-top:8px">Did the model forget? Leak rate after unlearning</h2>
+<p>A model trained to forget some facts (TOFU, "unlearning") may still give them away when it is sampled. Scholten et
+al. (arXiv:2410.03523) measure this by drawing 1,024 answers per question and having a judge check each one for the
+forgotten fact; the share that leaks is the leak rate. Here both sides run the evaluation's first batch: 8 forget-set
+questions at once, 1,024 answers each, all judged.</p>
+<div class="prompt"><b>Question</b><span id="prompt"></span></div>
+
+<h3>Both runs, on one clock</h3>
+<p>Press Play to replay the two measured runs in step. The circles show the first question of the batch: left, vLLM's
+1,024 answers as rows; right, Banyan's tree of the same 1,024 answers. Below, how many of the 8,192 answers each side has
+judged. vLLM generates all 8,192 first and the judge runs afterwards; Banyan judges each answer as it finishes.</p>
+<div class="stage" id="stage"></div>
+<p class="small">The prompt is at the centre of each circle and the distance from it is the token position (the dashed ring is the 64-token limit). Left: each of vLLM's 1,024 answers to the first question is one line, darker while it is being written; vLLM is writing the other 7 questions' rows at the same time. Right: Banyan's tree for the first question; a line's width is the number of answers through it. Both are
+ordered around the circle by text, so outputs that begin the same way are next to each other. Hover the chart to move
+the clock.</p>
+<h3>Leaked answers per question</h3>
+<p class="small">Both sides sample, so the counts differ from run to run; the evaluation checks that the leak rates over 32 questions agree.
+vLLM: <span data-fill="D.leaked.left.join(', ')"></span>. Banyan: <span data-fill="D.leaked.right.join(', ')"></span> (of 1,024 each).</p>
+<h3>Setup</h3>
+<table class="setup" id="setup"></table>
+
+<h3>How this was measured</h3>
+<dl class="how">
+  <dt>vLLM</dt><dd>The evaluation baseline's batch: one <code>generate()</code> over 8 prompts, unchanged, then its own judge loop. Wrappers in vLLM's
+  output processor note each engine step's time and which rows got a token; the judge loop notes the time after each answer.</dd>
+  <dt>Banyan</dt><dd>The algorithm is the evaluation's application on the user API. The measurement notes the time each node of the tree
+  was made (the runtime's own new-node callback, no change to the system), and its <code>@judge</code> notes the time after each verdict.</dd>
+  <dt>the cost of noting</dt><dd>Each side ran the timed part twice, with and without the notes: vLLM <span data-fill="D.plain.left.toFixed(2) + ' s without, ' + D.seconds.left.toFixed(2) + ' s with'"></span>;
+  Banyan <span data-fill="D.plain.right.toFixed(2) + ' s without, ' + D.seconds.right.toFixed(2) + ' s with'"></span>. The replay uses the runs with notes.</dd>
+</dl>
+</div></main>
+
+<footer class="site-footer"><div class="wrapper">Banyan is a research system under development.</div></footer>
+
+<script src="data/tofu.js"></script>
+<script src="replay.js"></script>
+<script>
+(function () {
+  var D = window.RUNS["tofu"], n = Replay.n;
+  document.getElementById("prompt").textContent = D.prompt;
+  Replay.mount(document.getElementById("stage"), D);
+  Replay.setup(document.getElementById("setup"), D);
+  document.querySelectorAll("[data-fill]").forEach(function (e) { e.textContent = new Function("D", "n", "return " + e.dataset.fill)(D, n); });
+})();
+</script>
+</body>
+</html>
