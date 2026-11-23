@@ -1,6 +1,6 @@
 :root {
   --text: #111111; --muted: #828282; --ink-2: #424242; --rule: #e8e8e8; --rule-2: #cfcbc1; --bg: #fdfdfd; --panel: #f4f4f4; --panel-2: #f9f9f9;
-  --link: #2a7ae2; --tree: #2a78d6; --mark: #eb6834;
+  --link: #2f6e4b; --accent: #3b8c5a; --tree: #2a78d6; --mark: #eb6834;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 * { box-sizing: border-box; }
@@ -9,7 +9,7 @@ body { margin: 0; background: var(--bg); color: var(--text);
 .wrapper { max-width: 800px; margin: 0 auto; padding: 0 30px; }
 a { color: var(--link); text-decoration: none; } a:hover { color: var(--text); text-decoration: underline; }
 
-.site-header { border-top: 5px solid var(--ink-2); border-bottom: 1px solid var(--rule); min-height: 56px; }
+.site-header { border-top: 5px solid var(--accent); border-bottom: 1px solid var(--rule); min-height: 56px; }
 .site-header .wrapper { display: flex; align-items: center; justify-content: space-between; min-height: 56px; }
 .site-title { font-size: 26px; font-weight: 300; letter-spacing: -1px; color: var(--ink-2); }
 .site-title:hover { text-decoration: none; color: var(--ink-2); }
@@ -43,10 +43,10 @@ details.main-item[open] > summary { border-bottom: 1px solid var(--rule); margin
 .clockbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 12px; border-bottom: 1px solid var(--rule); }
 .btn { font: 12px var(--mono); padding: 6px 13px; border: 1px solid var(--rule-2); background: #fff; color: var(--text); cursor: pointer; border-radius: 2px; min-width: 70px; }
 .btn:hover { border-color: var(--ink-2); } .btn:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
-.btn.primary { background: var(--ink-2); color: #fff; border-color: var(--ink-2); }
+.btn.primary { background: var(--link); color: #fff; border-color: var(--link); }
 .clock { font: 600 15px var(--mono); font-variant-numeric: tabular-nums; min-width: 190px; }
 .clock .u { color: var(--muted); font-weight: 400; font-size: 12px; }
-.clockbar input[type=range] { flex: 1 1 160px; min-width: 120px; accent-color: var(--ink-2); }
+.clockbar input[type=range] { flex: 1 1 160px; min-width: 120px; accent-color: var(--accent); }
 .clockbar label { font: 11px var(--mono); color: var(--muted); }
 .clockbar select { font: 12px var(--mono); padding: 4px 6px; border: 1px solid var(--rule-2); background: #fff; border-radius: 2px; }
 .panels { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--rule); }
