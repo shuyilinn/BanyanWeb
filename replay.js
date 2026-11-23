@@ -9,6 +9,7 @@
   function bs(arr, t) { var lo = 0, hi = arr.length; while (lo < hi) { var m = (lo + hi) >> 1; if (arr[m] <= t) lo = m + 1; else hi = m; } return lo; }
 
   function mount(root, D) {
+    var DARK = ["#0d3a73", "#a63a12"];                // the same hues, dark: rows being written
     var S = [D.sides.left, D.sides.right], COL = [BLUE, ORANGE], SEC = [D.seconds.left, D.seconds.right];
     var TMAX = Math.max(SEC[0], SEC[1]), RING = D.ring || 0, R = RING;
     S.forEach(function (s) {
@@ -82,9 +83,12 @@
       }
       c.lineWidth = HZ ? Math.max(0.5, Math.min(2 * DPR, g.hh / N * 0.8)) : Math.max(0.6, 0.5 * DPR); c.strokeStyle = COL[k];
       var base = N > 3000 ? 0.12 : 0.25;
-      [[done, HZ ? base * 1.6 : base], [paused, base * 2], [live, 0.6]].forEach(function (p) { var arr = p[0]; c.globalAlpha = p[1]; c.beginPath();
+      // finished rows light, rows being written dark, so the writing front stays visible
+      [[done, HZ ? base * 1.6 : base, COL[k]], [paused, base * 2, COL[k]], [live, 0.95, DARK[k]]].forEach(function (p) { var arr = p[0]; c.globalAlpha = p[1]; c.strokeStyle = p[2]; c.beginPath();
         for (var j = 0; j < arr.length; j += 2) { var f = (arr[j] + 0.5) / N, a0 = pt(g, 0, f), a1 = pt(g, arr[j + 1], f); c.moveTo(a0[0], a0[1]); c.lineTo(a1[0], a1[1]); } c.stroke(); });
       c.globalAlpha = 1;
+      if (HZ && s.bands > 1) { c.strokeStyle = "#fff"; c.lineWidth = 2 * DPR; c.beginPath();      // a gap between questions
+        for (var b = 1; b < s.bands; b++) { var yb = pt(g, 0, b / s.bands)[1]; c.moveTo(g.x0, yb); c.lineTo(g.W, yb); } c.stroke(); }
       var lk = drawMarks(c, g, s.marks, t, function (m) { return (m[0] + 0.5) / N; });
       return [["tokens written", n(written)], ["rows being written", n(live.length / 2)], lk];
     }
