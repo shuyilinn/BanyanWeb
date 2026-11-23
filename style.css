@@ -89,3 +89,9 @@ th.group { background: #f7f7f7; font-size: 13px; letter-spacing: .04em; text-tra
 .cases li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 20px; align-items: start; }
 .cases li p { grid-column: 1; margin: 0; }
 .cases li .x { grid-row: 1 / span 2; grid-column: 2; align-self: center; white-space: nowrap; font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.lead { font-size: 18px; color: var(--text); margin: 0 0 10px; }
+ul.points { list-style: none; padding: 0; margin: 0 0 28px; border-top: 1px solid var(--rule); }
+ul.points li { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--rule); color: var(--ink-2, #424242); }
+ul.points li b { color: var(--text); font-weight: 600; }
+@media (max-width: 640px) { ul.points li { grid-template-columns: 1fr; gap: 2px; } }
