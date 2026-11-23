@@ -34,7 +34,7 @@ everything it generated as one tree of tokens, in which samples that begin the s
   <a href="search.html"><canvas id="s-search"></canvas>Reasoning by tree search<span>532 s → 115 s</span></a>
   <a href="jailbreak.html"><canvas id="s-jailbreak"></canvas>Jailbreak search<span>22,193 → 1,021,692 nodes</span></a>
 </div>
-<p class="small" style="margin-top:8px">Each picture is the finished tree of one stored run: the prompt is on the left edge (or at the centre) and the distance from it is the token position.</p>
+<p class="small" style="margin-top:8px">Each picture is the finished tree of one stored run: the prompt is at the centre and the distance from it is the token position.</p>
 
 <h2>What Banyan provides</h2>
 <ul>
@@ -98,7 +98,7 @@ These are the small configurations of our evaluation.</p>
       c.moveTo(p0[0], p0[1]); c.lineTo(p1[0], p1[1]); c.stroke(); });
   }
   function draw() {
-    ["sampling", "tofu", "dle"].forEach(function (k) { seg(document.getElementById("s-" + k), window.RUNS[k].sides.right, window.RUNS[k].layout === "h"); });
+    ["sampling", "tofu", "dle"].forEach(function (k) { seg(document.getElementById("s-" + k), window.RUNS[k].sides.right, false);   // round thumbnails on the overview (Shuyi 2026-11-22) });
     ["risk", "search", "jailbreak"].forEach(function (k) { Banyan.still(document.getElementById("s-" + k), window.RUNS[k].right); });
   }
   draw();
