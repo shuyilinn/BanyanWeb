@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Banyan: Many samples per prompt</title>
-<link rel="stylesheet" href="style.css?v=2973f821">
+<link rel="stylesheet" href="style.css?v=5c43a0d0">
 </head>
 <body>
 <header class="site-header"><div class="wrapper">
@@ -27,8 +27,8 @@ each side has finished so far.</p>
 <div class="stage" id="stage"></div>
 <p class="small">Each side is drawn left to right: the prompt is on the left edge and the horizontal position is the token
 position in the sample (the dashed line is the 128-token limit). Left: vLLM's 10,000 samples, one horizontal line each,
-top to bottom in the order vLLM started them (it writes 1,024 at a time); a line is dark blue while vLLM is writing it
-and light once it is written. Right: Banyan's tree, top to bottom in text order so samples that begin the same way are
+top to bottom in the order vLLM started them (it writes 1,024 at a time); a line is black while vLLM is writing it
+and blue once it is written. Right: Banyan's tree, top to bottom in text order so samples that begin the same way are
 next to each other; a line's width is the number of samples through it, and where samples split the line branches
 downwards. Hover the chart to move the clock.</p>
 
@@ -51,7 +51,7 @@ downwards. Hover the chart to move the clock.</p>
 <footer class="site-footer"><div class="wrapper">Banyan is a research system under development.</div></footer>
 
 <script src="data/sampling.js?v=030b0139"></script>
-<script src="replay.js?v=af3a7821"></script>
+<script src="replay.js?v=746e918d"></script>
 <script>
 (function () {
   var D = window.RUNS["sampling"], n = Replay.n;
