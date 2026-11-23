@@ -4,12 +4,12 @@
 // a side is {kind: "rows", runs, len, step} or {kind: "tree", seg, units}.
 (function () {
   "use strict";
-  var BLUE = "#2a78d6", GREEN = "#16a34a", DPR = Math.min(window.devicePixelRatio || 1, 2);
+  var BLUE = "#2a78d6", ORANGE = "#eb6834", DPR = Math.min(window.devicePixelRatio || 1, 2);
   var n = function (x) { return Math.round(x).toLocaleString("en-US"); };
   function bs(arr, t) { var lo = 0, hi = arr.length; while (lo < hi) { var m = (lo + hi) >> 1; if (arr[m] <= t) lo = m + 1; else hi = m; } return lo; }
 
   function mount(root, D) {
-    var S = [D.sides.left, D.sides.right], COL = [BLUE, GREEN], SEC = [D.seconds.left, D.seconds.right];
+    var S = [D.sides.left, D.sides.right], COL = [BLUE, ORANGE], SEC = [D.seconds.left, D.seconds.right];
     var TMAX = Math.max(SEC[0], SEC[1]), RING = D.ring || 0, R = RING;
     S.forEach(function (s) {
       if (s.kind === "tree") {
@@ -27,7 +27,7 @@
       '<label>speed <select><option value="0.25">¼×</option><option value="0.5">½×</option><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option><option value="8">8×</option></select></label></div>' +
       '<div class="panels"></div>' +
       '<div style="background:#fff;padding:10px 14px 4px;border-top:1px solid var(--rule)"><div class="phead" style="margin-bottom:4px"><span class="pname"></span>' +
-      '<span class="legend-i" style="margin-left:14px"><i style="background:' + BLUE + '"></i></span><span class="legend-i" style="margin-left:10px"><i style="background:' + GREEN + '"></i></span></div><svg role="img"></svg></div>' +
+      '<span class="legend-i" style="margin-left:14px"><i style="background:' + BLUE + '"></i></span><span class="legend-i" style="margin-left:10px"><i style="background:' + ORANGE + '"></i></span></div><svg role="img"></svg></div>' +
       '<div class="status"></div>';
     var btns = root.querySelectorAll("button"), play = btns[0], scrub = root.querySelector("input"), sel = root.querySelector("select");
     var clock = root.querySelector('[data-r="clock"]'), status = root.querySelector(".status"), panels = root.querySelector(".panels");
@@ -92,7 +92,7 @@
     el("text", { x: (L + Wc - Rm) / 2, y: Hc - 4, "text-anchor": "middle", "font-size": 12, fill: "#424242" }, "seconds");
     el("line", { x1: L, x2: Wc - Rm, y1: Y(0), y2: Y(0), stroke: "#424242" });
     function curve(F, upto) { var d = "M" + X(0) + "," + Y(0), k, prev = 0; for (k = 0; k < F.length && F[k] <= upto; k++) { d += "L" + X(F[k]).toFixed(1) + "," + Y(prev).toFixed(1) + "L" + X(F[k]).toFixed(1) + "," + Y(k + 1).toFixed(1); prev = k + 1; } return d + "L" + X(upto).toFixed(1) + "," + Y(prev).toFixed(1); }
-    var path = [el("path", { fill: "none", stroke: BLUE, "stroke-width": 2 }), el("path", { fill: "none", stroke: GREEN, "stroke-width": 2 })];
+    var path = [el("path", { fill: "none", stroke: BLUE, "stroke-width": 2 }), el("path", { fill: "none", stroke: ORANGE, "stroke-width": 2 })];
     var cl = el("line", { y1: T, y2: Y(0), stroke: "#424242", "stroke-dasharray": "3 3" });
     var lab = [el("text", { "font-size": 12.5, fill: "#111" }, D.names.left[0]), el("text", { "font-size": 12.5, fill: "#111" }, D.names.right[0])];
     var hit = el("rect", { x: L, y: T, width: Wc - L - Rm, height: Hc - T - Bm, fill: "transparent", style: "cursor:crosshair" });

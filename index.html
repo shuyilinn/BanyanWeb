@@ -80,13 +80,13 @@ These are the small configurations of our evaluation.</p>
 <script>
 (function () {
   // pages on the replay component carry segments; the older pages carry dots (viz.js)
-  var DPR = Math.min(window.devicePixelRatio || 1, 2), GREEN = "#16a34a";
+  var DPR = Math.min(window.devicePixelRatio || 1, 2), ORANGE = "#eb6834";
   function seg(cv, s) {
     var w = cv.clientWidth || 200; cv.width = w * DPR; cv.height = w * DPR; cv.style.height = w + "px";
     var c = cv.getContext("2d"), cx = cv.width / 2, cy = cv.height / 2, deep = 1;
     s.seg.forEach(function (g) { deep = Math.max(deep, g[2] + g[4].length); });
     var rs = (cv.width / 2 - 4 * DPR) / deep, ang = function (x) { return -Math.PI / 2 + 2 * Math.PI * x / s.units; };
-    c.strokeStyle = GREEN;
+    c.strokeStyle = ORANGE;
     s.seg.forEach(function (g) { var a = ang(g[0]), pa = ang(g[1]), r0 = g[2] * rs, r1 = (g[2] + g[4].length) * rs;
       c.globalAlpha = g[3] > 1 ? 0.85 : 0.45; c.lineWidth = Math.max(0.5, 0.45 * DPR) + 5 * DPR * Math.sqrt(g[3] / s.units); c.beginPath();
       if (r0 > 0 && Math.abs(a - pa) > 1e-6) c.arc(cx, cy, r0, Math.min(a, pa), Math.max(a, pa));
