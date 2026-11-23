@@ -4,7 +4,7 @@
 // a side is {kind: "rows", runs, len, step} or {kind: "tree", seg, units}.
 (function () {
   "use strict";
-  var BLUE = "#2a78d6", GREEN = "#3b8c5a", DPR = Math.min(window.devicePixelRatio || 1, 2);
+  var BLUE = "#2a78d6", GREEN = "#16a34a", DPR = Math.min(window.devicePixelRatio || 1, 2);
   var n = function (x) { return Math.round(x).toLocaleString("en-US"); };
   function bs(arr, t) { var lo = 0, hi = arr.length; while (lo < hi) { var m = (lo + hi) >> 1; if (arr[m] <= t) lo = m + 1; else hi = m; } return lo; }
 
