@@ -53,21 +53,23 @@ everything it generated as one tree of tokens, in which samples that begin the s
 <p>Banyan uses vLLM as its model library and adds its own attention kernel, sampler and scheduler.</p>
 
 <h2>Measurements</h2>
-<p>Each application is an existing method rewritten on Banyan with its algorithm unchanged, and compared with its
-reference implementation on the same model and one NVIDIA H100.</p>
+<p>Each application is an existing method run on Banyan with its algorithm unchanged, against its reference
+implementation, on the same model and one NVIDIA H100 PCIe.</p>
 <table>
-  <thead><tr><th>Application</th><th>Model</th><th>Compared with</th><th class="num">Speed</th><th>Output check</th></tr></thead>
+  <thead><tr><th>Application</th><th>Model</th><th>Compared with</th><th class="num">Reference</th><th class="num">Banyan</th><th class="num">Speed</th></tr></thead>
   <tbody>
-    <tr><th colspan="5" class="group">Sampling workloads</th></tr>
-    <tr><td>1,000 samples per prompt</td><td>Qwen3-8B</td><td>vLLM <code>generate(n=1000)</code></td><td class="num">2.1×</td><td>same distribution (156 of 156 tests)</td></tr>
-    <tr><td>Leak rate after unlearning (TOFU)</td><td>Llama-3.2-1B</td><td>vLLM sampling and the judge</td><td class="num">1.8×</td><td>leak rates differ by 0.003</td></tr>
-    <tr><th colspan="5" class="group">Search workloads</th></tr>
-    <tr><td>Reasoning by tree search (rStar-Math)</td><td>Qwen3-8B</td><td>authors' code</td><td class="num">5.0×</td><td>accuracy 0.83; reference 0.75 or higher</td></tr>
-    <tr><td>Jailbreak search (BOA)</td><td>Llama-3.1-8B</td><td>authors' code</td><td class="num">25×</td><td>nodes scored in a fixed 600 s</td></tr>
+    <tr><th colspan="6" class="group">Sampling workloads</th></tr>
+    <tr><td><a href="sampling.html">10,000 samples of one prompt</a></td><td>Qwen3-8B</td><td>vLLM <code>generate(n=10000)</code></td><td class="num">85.4 s</td><td class="num">20.8 s</td><td class="num">4.1×</td></tr>
+    <tr><td><a href="tofu.html">Leak rate after unlearning, 8 questions × 1,024 answers, judged</a></td><td>Llama-3.2-1B</td><td>vLLM batched sampling, then the judge</td><td class="num">7.0 s</td><td class="num">4.8 s</td><td class="num">1.5×</td></tr>
+    <tr><th colspan="6" class="group">Search workloads</th></tr>
+    <tr><td><a href="search.html">Reasoning by tree search (rStar-Math), 16 questions</a></td><td>Qwen3-8B</td><td>authors' code on vLLM</td><td class="num">532 s</td><td class="num">115 s</td><td class="num">4.6×</td></tr>
+    <tr><td><a href="jailbreak.html">Jailbreak search (BOA), one request, 600 s</a></td><td>Llama-3.1-8B</td><td>authors' code</td><td class="num">4,641 nodes scored</td><td class="num">97,636 nodes scored</td><td class="num">21×</td></tr>
   </tbody>
 </table>
-<p class="small">Speed is end-to-end time, median of three runs per side; the last row is throughput under a fixed time budget.
-These are the small configurations of our evaluation.</p>
+<p class="small">One run per side, from the use-case pages: the sampling rows were measured for this site (2026-11-22), the search rows
+come from runs of our evaluation's small configuration (one run per side; over three runs per side the evaluation
+reports 5.0× for the tree search and 25× scored nodes per second for the jailbreak search). The jailbreak row is work
+done in a fixed 600 seconds, not time. The search rows will be re-measured the same way as the sampling rows.</p>
 </div></main>
 
 <footer class="site-footer"><div class="wrapper">Banyan is a research system under development.</div></footer>
