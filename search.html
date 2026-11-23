@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Banyan: Reasoning by tree search</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header"><div class="wrapper">
+  <a class="site-title" href="index.html">Banyan</a>
+  <nav class="site-nav"><a href="index.html">Overview</a><a href="usecases.html" aria-current="page">Use cases</a></nav>
+</div></header>
+
+<main class="page-content"><div class="wrapper">
+<p class="back"><a href="usecases.html">← Use cases</a></p>
+<h2 style="margin-top:8px">Reasoning by tree search</h2>
+<p>rStar-Math (arXiv:2501.04519) solves a math problem by Monte Carlo tree search: the model writes a reasoning step
+with Python code, the code is executed, and the search decides which partial solution to extend next.</p>
+<p>On Banyan the search policy is a Python method and the code execution is an environment call. Sixteen questions
+are searched together in one batch.</p>
+<div class="prompt"><b>Question</b><span id="prompt"></span></div>
+<div class="stage" id="stage"></div>
+<h3>Setup</h3>
+<table class="setup" id="setup"></table>
+<h3>Reading the picture</h3>
+<p>A dot is a node of the stored tree, a line joins a node to its parent, and the distance from the centre is the
+position of the node's token in the output. Both panels use one layout: the same sequence of tokens is at the same
+place in both, so where the two trees contain the same path they coincide. A tree too large to draw whole is drawn as
+the full paths from the root to a random sample of its nodes (drawn here: <span id="ratio"></span>). The slider moves
+through the order in which a run created its nodes, for the runs that recorded it; black dots were just created. The
+numbers under each panel are that run's measured totals.</p>
+<p>Both sides ran the same search on the same question. A green dot is a final answer the search values +1. The
+authors' tree file has no creation times, so the left panel shows their finished tree; its steps are drawn token by
+token (tokenized with the model's tokenizer) so that both panels measure depth in tokens.</p>
+<p class="small">Qwen3-8B, 16 GSM8K questions searched together, 48 rollouts each, one NVIDIA H100; the times are for the whole run and the
+tree is the first question's. Over three runs per side Banyan's median is 133.6 s, 5.0× faster than the authors' code,
+with accuracy 0.83 against the reference's 0.75 or higher.</p>
+</div></main>
+
+<footer class="site-footer"><div class="wrapper">Banyan is a research system under development.</div></footer>
+
+<script src="data/search.js"></script>
+<script src="viz.js"></script>
+<script src="page.js"></script>
+<script>Page.run("search", "authors' code", "Banyan");</script>
+</body>
+</html>

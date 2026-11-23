@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Banyan: How often does a model give a harmful answer?</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header"><div class="wrapper">
+  <a class="site-title" href="index.html">Banyan</a>
+  <nav class="site-nav"><a href="index.html">Overview</a><a href="usecases.html" aria-current="page">Use cases</a></nav>
+</div></header>
+
+<main class="page-content"><div class="wrapper">
+<p class="back"><a href="usecases.html">← Use cases</a></p>
+<h2 style="margin-top:8px">How often does a model give a harmful answer?</h2>
+<p>A model that usually refuses a harmful request will, when sampled, sometimes comply. The rate is hard to measure:
+if it is one in ten thousand, plain sampling needs tens of thousands of answers to see it at all.</p>
+<p>Angell et al. (ICML 2026, arXiv:2604.22167) sample instead from a copy of the model whose <em>refusal direction</em>
+has been ablated, which complies far more often, and weight each sample by the ratio of its probability under the
+original model to its probability under the ablated one. The weighted average estimates the original model's rate.</p>
+<p>On Banyan the ablation is a <code>@steer</code> step and the mixture of the two models a <code>@sampling</code> step.
+Both probabilities of every token are stored on the tree, so the weight of a sample is one subtraction.</p>
+<div class="prompt"><b>Request</b><span id="prompt"></span></div>
+<div class="stage" id="stage"></div>
+<h3>Setup</h3>
+<table class="setup" id="setup"></table>
+<h3>Reading the picture</h3>
+<p>A dot is a node of the stored tree, a line joins a node to its parent, and the distance from the centre is the
+position of the node's token in the output. Both panels use one layout: the same sequence of tokens is at the same
+place in both, so where the two trees contain the same path they coincide. A tree too large to draw whole is drawn as
+the full paths from the root to a random sample of its nodes (drawn here: <span id="ratio"></span>). The slider moves
+through the order in which a run created its nodes, for the runs that recorded it; black dots were just created. The
+numbers under each panel are that run's measured totals.</p>
+<p>Both panels are 1,000 answers to the same request, and both runs are Banyan's: there is no engine baseline for this
+method, so the left panel is the same model sampled without steering. A green dot is an answer the judge scores
+harmful. The dashed ring is the 150-token limit.</p>
+<p>For this request plain sampling found 2 harmful answers in 1,000 and the steered proposal 13.</p>
+<h3>All six requests</h3>
+<table id="riskTable"></table>
+<p class="small">Llama-3.2-1B-Instruct with the StrongREJECT requests and judge; 1,000 samples of up to 150 tokens per request on
+each side. Brute force is the authors' 10,000 plain samples per request. Banyan's estimates are below the brute-force
+rates: this version draws each token from the model's 512 most likely candidates and loses the original model's
+probability outside that set.</p>
+</div></main>
+
+<footer class="site-footer"><div class="wrapper">Banyan is a research system under development.</div></footer>
+
+<script src="data/risk.js"></script>
+<script src="viz.js"></script>
+<script src="page.js"></script>
+<script>Page.run("risk", "plain sampling", "Banyan");</script>
+</body>
+</html>

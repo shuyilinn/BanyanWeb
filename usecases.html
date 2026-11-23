@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Banyan: use cases</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header"><div class="wrapper">
+  <a class="site-title" href="index.html">Banyan</a>
+  <nav class="site-nav"><a href="index.html">Overview</a><a href="usecases.html" aria-current="page">Use cases</a></nav>
+</div></header>
+
+<main class="page-content"><div class="wrapper">
+<h2 style="margin-top:6px">Use cases</h2>
+<p>Four applications written on Banyan. Each page describes the method and shows the trees of two stored runs side by side:
+the baseline on the left, Banyan on the right. Banyan's tree can be replayed in the order it was built.</p>
+<ul class="cases">
+  <li><a class="t" href="risk.html">How often does a model give a harmful answer?</a><p>Estimate a rare harmful-answer rate by sampling from a refusal-ablated copy of the model and reweighting to the original.</p></li>
+  <li><a class="t" href="sampling.html">Many samples per prompt</a><p>1,000 samples of one prompt: 1,000 separate rows in vLLM, one tree in Banyan.</p></li>
+  <li><a class="t" href="search.html">Reasoning by tree search</a><p>rStar-Math's Monte Carlo tree search with code execution, against the authors' implementation.</p></li>
+  <li><a class="t" href="jailbreak.html">Jailbreak search</a><p>BOA's search for a jailbreak among a model's likely responses, 600 seconds, against the authors' implementation.</p></li>
+</ul>
+</div></main>
+
+<footer class="site-footer"><div class="wrapper">Banyan is a research system under development.</div></footer>
+</body>
+</html>

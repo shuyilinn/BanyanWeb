@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Banyan</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header"><div class="wrapper">
+  <a class="site-title" href="index.html">Banyan</a>
+  <nav class="site-nav"><a href="index.html" aria-current="page">Overview</a><a href="usecases.html">Use cases</a></nav>
+</div></header>
+
+<main class="page-content"><div class="wrapper">
+<p>Banyan is a system for LLM workloads that need many outputs from one model instead of one answer: measuring how
+often a model gives a harmful answer, generating a dataset, searching for a correct solution. An algorithm is
+written as a short Python class that says how to steer the model, how to draw each token, when to call a judge and
+which branches to expand or prune. Banyan runs it on the GPU next to the model and keeps everything it generated as
+one tree of tokens, in which samples that begin the same way share the same nodes.</p>
+<p class="authors">Shuyi Lin, Cheng Tan · Northeastern University</p>
+
+<p>The trees of four runs <em>(click one to watch it grow)</em>:</p>
+<div class="stills">
+  <a href="risk.html"><canvas id="s-risk"></canvas>Harmful-answer rate<span>1,000 samples</span></a>
+  <a href="sampling.html"><canvas id="s-sampling"></canvas>Many samples per prompt<span>1,000 samples</span></a>
+  <a href="search.html"><canvas id="s-search"></canvas>Reasoning by tree search<span>48 rollouts</span></a>
+  <a href="jailbreak.html"><canvas id="s-jailbreak"></canvas>Jailbreak search<span>600 seconds</span></a>
+</div>
+<p class="small" style="margin-top:8px">A dot is a node of the tree; its distance from the centre is the position of its token in the output.</p>
+
+<h2>What Banyan provides</h2>
+<ul>
+  <li><strong>Algorithms as Python classes.</strong> A sampler or a search is one class with a few decorated methods
+  (<code>@steer</code>, <code>@sampling</code>, <code>@judge</code>, <code>@prune</code>, a search policy). The per-token parts are compiled to run on the GPU
+  with the model; the rest is ordinary Python.</li>
+  <li><strong>One tree per prompt.</strong> A node keeps the candidate tokens at its position with their log-probabilities,
+  so more samples can be drawn at a branch point without another forward pass.</li>
+  <li><strong>Steering, with the original model alongside.</strong> A direction can be added to or removed from the hidden state
+  at chosen layers and token positions, and the unmodified model's probability of every generated token is kept
+  next to the steered one.</li>
+  <li><strong>Judges inside the loop.</strong> Classifier and LLM judges score samples as they finish; search policies read
+  the scores to decide what to expand.</li>
+  <li><strong>Every run is saved.</strong> A run writes its trees to disk. The replays on the
+  <a href="usecases.html">use-case pages</a> are drawn from those files.</li>
+</ul>
+<p>Banyan uses vLLM as its model library and adds its own attention kernel, sampler and scheduler.</p>
+
+<h2>Measurements</h2>
+<p>Each application is an existing method rewritten on Banyan with its algorithm unchanged, and compared with its
+reference implementation on the same model and one NVIDIA H100.</p>
+<table>
+  <thead><tr><th>Application</th><th>Model</th><th>Compared with</th><th class="num">Speed</th><th>Output check</th></tr></thead>
+  <tbody>
+    <tr><td>Reasoning by tree search (rStar-Math)</td><td>Qwen3-8B</td><td>authors' code</td><td class="num">5.0×</td><td>accuracy 0.83; reference 0.75 or higher</td></tr>
+    <tr><td>Truncated decoding trees</td><td>Qwen2.5-0.5B</td><td>authors' code</td><td class="num">2.9×</td><td>accuracy 0.50; reference 0.31 or higher</td></tr>
+    <tr><td>1,000 samples per prompt</td><td>Qwen3-8B</td><td>vLLM <code>generate(n=1000)</code></td><td class="num">2.1×</td><td>same distribution (156 of 156 tests)</td></tr>
+    <tr><td>Leak rate after unlearning (TOFU)</td><td>Llama-3.2-1B</td><td>vLLM sampling and the judge</td><td class="num">1.8×</td><td>leak rates differ by 0.003</td></tr>
+    <tr><td>Jailbreak search (BOA)</td><td>Llama-3.1-8B</td><td>authors' code</td><td class="num">25×</td><td>nodes scored in a fixed 600 s</td></tr>
+  </tbody>
+</table>
+<p class="small">Speed is end-to-end time, median of three runs per side; the last row is throughput under a fixed time budget.
+These are the small configurations of our evaluation.</p>
+</div></main>
+
+<footer class="site-footer"><div class="wrapper">Banyan is a research system under development.</div></footer>
+
+<script src="data/risk.js"></script><script src="data/sampling.js"></script><script src="data/search.js"></script><script src="data/jailbreak.js"></script>
+<script src="viz.js"></script>
+<script>["risk", "sampling", "search", "jailbreak"].forEach(function (k) { Banyan.still(document.getElementById("s-" + k), window.RUNS[k].right); });</script>
+</body>
+</html>

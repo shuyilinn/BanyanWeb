@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Banyan: Jailbreak search</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header"><div class="wrapper">
+  <a class="site-title" href="index.html">Banyan</a>
+  <nav class="site-nav"><a href="index.html">Overview</a><a href="usecases.html" aria-current="page">Use cases</a></nav>
+</div></header>
+
+<main class="page-content"><div class="wrapper">
+<p class="back"><a href="usecases.html">← Use cases</a></p>
+<h2 style="margin-top:8px">Jailbreak search</h2>
+<p>BOA (arXiv:2506.17299) asks whether <em>any</em> likely response of a model to a harmful request is a jailbreak. It
+searches the responses token by token, keeps only continuations whose probability stays above a threshold, samples
+lookaheads from promising nodes and sends them to a judge.</p>
+<p>On Banyan the probability threshold is a pruning rule on the GPU, the lookaheads are samples in the same tree,
+and judge calls are batched.</p>
+<div class="prompt"><b>Request</b><span id="prompt"></span></div>
+<div class="stage" id="stage"></div>
+<h3>Setup</h3>
+<table class="setup" id="setup"></table>
+<h3>Reading the picture</h3>
+<p>A dot is a node of the stored tree, a line joins a node to its parent, and the distance from the centre is the
+position of the node's token in the output. Both panels use one layout: the same sequence of tokens is at the same
+place in both, so where the two trees contain the same path they coincide. A tree too large to draw whole is drawn as
+the full paths from the root to a random sample of its nodes (drawn here: <span id="ratio"></span>). The slider moves
+through the order in which a run created its nodes, for the runs that recorded it; black dots were just created. The
+numbers under each panel are that run's measured totals.</p>
+<p>Both sides had the same 600-second budget, the same request, model and settings, so they search the same tree: the
+two trees start with the same tokens and have the same number of nodes at each of the first twelve token positions.
+Banyan's tree is then much wider. The authors' code does not record when a node was created, so the left panel shows
+its finished tree.</p>
+<p class="small">Llama-3.1-8B-Instruct, a 600-second budget on one NVIDIA H100, target model and judge on the same card. Neither side
+found a jailbreak for this request in that time. Over three runs per side, Banyan scores 25 times as many nodes
+per second.</p>
+</div></main>
+
+<footer class="site-footer"><div class="wrapper">Banyan is a research system under development.</div></footer>
+
+<script src="data/jailbreak.js"></script>
+<script src="viz.js"></script>
+<script src="page.js"></script>
+<script>Page.run("jailbreak", "authors' code", "Banyan");</script>
+</body>
+</html>
