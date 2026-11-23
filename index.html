@@ -13,16 +13,11 @@
 </div></header>
 
 <main class="page-content"><div class="wrapper">
-<h2 style="margin-top:6px">LLM sampling and search, as one tree</h2>
-<p class="lead">Banyan runs LLM workloads that need many outputs from one model instead of one answer.</p>
-<ul class="points">
-  <li><b>The workloads</b><span>Measuring how often a model gives a harmful answer, generating a dataset, auditing what a
-  model still knows, searching for a correct solution.</span></li>
-  <li><b>How you write them</b><span>An algorithm is a short Python class: how to steer the model, how to draw each token,
-  when to call a judge, which branches to expand or prune.</span></li>
-  <li><b>How Banyan runs them</b><span>On the GPU, next to the model, with everything generated kept as one tree of tokens.</span></li>
-  <li><b>Why a tree</b><span>Outputs that begin the same way share the same nodes, so a shared beginning is computed once.</span></li>
-</ul>
+<p>Banyan is a system for LLM workloads that need many outputs from one model instead of one answer: measuring how
+often a model gives a harmful answer, generating a dataset, auditing what a model still knows, searching for a correct
+solution. An algorithm is written as a short Python class that says how to steer the model, how to draw each token,
+when to call a judge and which branches to expand or prune. Banyan runs it on the GPU next to the model and keeps
+everything it generated as one tree of tokens, in which samples that begin the same way share the same nodes.</p>
 
 <h3>Sampling workloads</h3>
 <p class="small">Many independent samples from one prompt. Banyan's trees from the three sampling use cases <em>(click one to replay it next to its baseline)</em>:</p>
@@ -85,13 +80,13 @@ These are the small configurations of our evaluation.</p>
 <script>
 (function () {
   // pages on the replay component carry segments; the older pages carry dots (viz.js)
-  var DPR = Math.min(window.devicePixelRatio || 1, 2), ORANGE = "#eb6834";
+  var DPR = Math.min(window.devicePixelRatio || 1, 2), GREEN = "#16a34a";
   function seg(cv, s) {
     var w = cv.clientWidth || 200; cv.width = w * DPR; cv.height = w * DPR; cv.style.height = w + "px";
     var c = cv.getContext("2d"), cx = cv.width / 2, cy = cv.height / 2, deep = 1;
     s.seg.forEach(function (g) { deep = Math.max(deep, g[2] + g[4].length); });
     var rs = (cv.width / 2 - 4 * DPR) / deep, ang = function (x) { return -Math.PI / 2 + 2 * Math.PI * x / s.units; };
-    c.strokeStyle = ORANGE;
+    c.strokeStyle = GREEN;
     s.seg.forEach(function (g) { var a = ang(g[0]), pa = ang(g[1]), r0 = g[2] * rs, r1 = (g[2] + g[4].length) * rs;
       c.globalAlpha = g[3] > 1 ? 0.85 : 0.45; c.lineWidth = Math.max(0.5, 0.45 * DPR) + 5 * DPR * Math.sqrt(g[3] / s.units); c.beginPath();
       if (r0 > 0 && Math.abs(a - pa) > 1e-6) c.arc(cx, cy, r0, Math.min(a, pa), Math.max(a, pa));
