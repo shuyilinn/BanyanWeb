@@ -20,14 +20,22 @@ which branches to expand or prune. Banyan runs it on the GPU next to the model a
 one tree of tokens, in which samples that begin the same way share the same nodes.</p>
 <p class="authors">Shuyi Lin, Cheng Tan · Northeastern University</p>
 
-<p>The trees of four runs <em>(click one to watch it grow)</em>:</p>
-<div class="stills">
-  <a href="risk.html"><canvas id="s-risk"></canvas>Harmful-answer rate<span>1,000 samples</span></a>
-  <a href="sampling.html"><canvas id="s-sampling"></canvas>Many samples per prompt<span>1,000 samples</span></a>
-  <a href="search.html"><canvas id="s-search"></canvas>Reasoning by tree search<span>48 rollouts</span></a>
-  <a href="jailbreak.html"><canvas id="s-jailbreak"></canvas>Jailbreak search<span>600 seconds</span></a>
+<h3>Sampling workloads</h3>
+<p class="small">Many independent samples from one prompt. Banyan's trees from the three sampling use cases <em>(click one to replay it next to its baseline)</em>:</p>
+<div class="stills s3">
+  <a href="sampling.html"><canvas id="s-sampling"></canvas>Many samples per prompt<span>85.4 s → 20.8 s</span></a>
+  <a href="tofu.html"><canvas id="s-tofu"></canvas>Did the model forget? Leak rate after unlearning<span>7.0 s → 4.8 s</span></a>
+  <a href="risk.html"><canvas id="s-risk"></canvas>How often does a model give a harmful answer?<span>2 → 13 harmful found</span></a>
 </div>
-<p class="small" style="margin-top:8px">A dot is a node of the tree; its distance from the centre is the position of its token in the output.</p>
+
+<h3>Search workloads</h3>
+<p class="small">An algorithm chooses which partial output to extend next. Banyan's trees from the three search use cases:</p>
+<div class="stills s3">
+  <a href="dle.html"><canvas id="s-dle"></canvas>Truncated decoding trees<span>6.4 s → 2.6 s</span></a>
+  <a href="search.html"><canvas id="s-search"></canvas>Reasoning by tree search<span>532 s → 115 s</span></a>
+  <a href="jailbreak.html"><canvas id="s-jailbreak"></canvas>Jailbreak search<span>22,193 → 1,021,692 nodes</span></a>
+</div>
+<p class="small" style="margin-top:8px">The prompt is at the centre; the distance from it is the token position.</p>
 
 <h2>What Banyan provides</h2>
 <ul>
@@ -52,10 +60,12 @@ reference implementation on the same model and one NVIDIA H100.</p>
 <table>
   <thead><tr><th>Application</th><th>Model</th><th>Compared with</th><th class="num">Speed</th><th>Output check</th></tr></thead>
   <tbody>
-    <tr><td>Reasoning by tree search (rStar-Math)</td><td>Qwen3-8B</td><td>authors' code</td><td class="num">5.0×</td><td>accuracy 0.83; reference 0.75 or higher</td></tr>
-    <tr><td>Truncated decoding trees</td><td>Qwen2.5-0.5B</td><td>authors' code</td><td class="num">2.9×</td><td>accuracy 0.50; reference 0.31 or higher</td></tr>
+    <tr><th colspan="5" class="group">Sampling workloads</th></tr>
     <tr><td>1,000 samples per prompt</td><td>Qwen3-8B</td><td>vLLM <code>generate(n=1000)</code></td><td class="num">2.1×</td><td>same distribution (156 of 156 tests)</td></tr>
     <tr><td>Leak rate after unlearning (TOFU)</td><td>Llama-3.2-1B</td><td>vLLM sampling and the judge</td><td class="num">1.8×</td><td>leak rates differ by 0.003</td></tr>
+    <tr><th colspan="5" class="group">Search workloads</th></tr>
+    <tr><td>Truncated decoding trees</td><td>Qwen2.5-0.5B</td><td>the paper's algorithm on vLLM (our rewrite; the authors' code is not released)</td><td class="num">2.9×</td><td>accuracy 0.50; reference 0.31 or higher</td></tr>
+    <tr><td>Reasoning by tree search (rStar-Math)</td><td>Qwen3-8B</td><td>authors' code</td><td class="num">5.0×</td><td>accuracy 0.83; reference 0.75 or higher</td></tr>
     <tr><td>Jailbreak search (BOA)</td><td>Llama-3.1-8B</td><td>authors' code</td><td class="num">25×</td><td>nodes scored in a fixed 600 s</td></tr>
   </tbody>
 </table>
@@ -65,8 +75,30 @@ These are the small configurations of our evaluation.</p>
 
 <footer class="site-footer"><div class="wrapper">Banyan is a research system under development.</div></footer>
 
-<script src="data/risk.js"></script><script src="data/sampling.js"></script><script src="data/search.js"></script><script src="data/jailbreak.js"></script>
+<script src="data/risk.js"></script><script src="data/sampling.js"></script><script src="data/tofu.js"></script>
+<script src="data/dle.js"></script><script src="data/search.js"></script><script src="data/jailbreak.js"></script>
 <script src="viz.js"></script>
-<script>["risk", "sampling", "search", "jailbreak"].forEach(function (k) { Banyan.still(document.getElementById("s-" + k), window.RUNS[k].right); });</script>
+<script>
+(function () {
+  // pages on the replay component carry segments; the older pages carry dots (viz.js)
+  var DPR = Math.min(window.devicePixelRatio || 1, 2), ORANGE = "#eb6834";
+  function seg(cv, s) {
+    var w = cv.clientWidth || 200; cv.width = w * DPR; cv.height = w * DPR; cv.style.height = w + "px";
+    var c = cv.getContext("2d"), cx = cv.width / 2, cy = cv.height / 2, deep = 1;
+    s.seg.forEach(function (g) { deep = Math.max(deep, g[2] + g[4].length); });
+    var rs = (cv.width / 2 - 4 * DPR) / deep, ang = function (x) { return -Math.PI / 2 + 2 * Math.PI * x / s.units; };
+    c.strokeStyle = ORANGE;
+    s.seg.forEach(function (g) { var a = ang(g[0]), pa = ang(g[1]), r0 = g[2] * rs, r1 = (g[2] + g[4].length) * rs;
+      c.globalAlpha = g[3] > 1 ? 0.85 : 0.45; c.lineWidth = Math.max(0.5, 0.45 * DPR) + 5 * DPR * Math.sqrt(g[3] / s.units); c.beginPath();
+      if (r0 > 0 && Math.abs(a - pa) > 1e-6) c.arc(cx, cy, r0, Math.min(a, pa), Math.max(a, pa));
+      c.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0); c.lineTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1); c.stroke(); });
+  }
+  function draw() {
+    ["sampling", "tofu", "dle"].forEach(function (k) { seg(document.getElementById("s-" + k), window.RUNS[k].sides.right); });
+    ["risk", "search", "jailbreak"].forEach(function (k) { Banyan.still(document.getElementById("s-" + k), window.RUNS[k].right); });
+  }
+  draw();
+})();
+</script>
 </body>
 </html>

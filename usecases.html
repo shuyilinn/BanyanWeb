@@ -14,16 +14,29 @@
 
 <main class="page-content"><div class="wrapper">
 <h2 style="margin-top:6px">Use cases</h2>
-<p>Four applications written on Banyan. Each page describes the method and shows the trees of two stored runs side by side:
-the baseline on the left, Banyan on the right. Banyan's tree can be replayed in the order it was built.</p>
+<p>Six applications written on Banyan, in two kinds of workload. Each page describes the method and replays a baseline
+run (left) and a Banyan run (right) side by side.</p>
+
+<h3 id="sampling-workloads">Sampling workloads</h3>
+<p>The workload draws many independent samples from the same prompt: to estimate a rate, build a dataset or audit a
+model. vLLM computes each sample as its own row; Banyan computes them as one tree, so tokens that samples share are
+computed once.</p>
 <ul class="cases">
-  <li><a class="t" href="risk.html">How often does a model give a harmful answer?</a><p>Estimate a rare harmful-answer rate by sampling from a refusal-ablated copy of the model and reweighting to the original.</p></li>
-  <li><a class="t" href="sampling.html">Many samples per prompt</a><p>1,000 samples of one prompt: 1,000 separate rows in vLLM, one tree in Banyan.</p></li>
-  <li><a class="t" href="search.html">Reasoning by tree search</a><p>rStar-Math's Monte Carlo tree search with code execution, against the authors' implementation.</p></li>
-  <li><a class="t" href="jailbreak.html">Jailbreak search</a><p>BOA's search for a jailbreak among a model's likely responses, 600 seconds, against the authors' implementation.</p></li>
-  <li><a class="t" href="tofu.html">Did the model forget? Leak rate after unlearning</a><p>1,024 judged answers per question for a model trained to forget, against vLLM's batched sampling and the same judge.</p></li>
-  <li><a class="t" href="dle.html">Truncated decoding trees</a><p>The paper's leaf enumeration on vLLM's requests against the same search on Banyan's tree.</p></li>
+  <li><a class="t" href="sampling.html">Many samples per prompt</a><p>10,000 samples of one GSM8K question with Qwen3-8B: vLLM's 10,000 rows against Banyan's one tree.</p><span class="x">85.4 s → 20.8 s</span></li>
+  <li><a class="t" href="tofu.html">Did the model forget? Leak rate after unlearning</a><p>1,024 judged answers per question for a model trained to forget, against vLLM's batched sampling and the same judge.</p><span class="x">7.0 s → 4.8 s</span></li>
+  <li><a class="t" href="risk.html">How often does a model give a harmful answer?</a><p>Estimate a rare harmful-answer rate by sampling from a refusal-ablated copy of the model and reweighting to the original.</p><span class="x">2 → 13 harmful found</span></li>
 </ul>
+
+<h3 id="search-workloads">Search workloads</h3>
+<p>The workload is a search: an algorithm decides which partial output to extend next, often with a judge or an
+environment in the loop. The reference implementations send each step to the engine as new requests; Banyan runs the
+search inside one tree on the GPU and keeps the batch full.</p>
+<ul class="cases">
+  <li><a class="t" href="dle.html">Truncated decoding trees</a><p>Enumerate a question's 32 most likely distinct answers: the paper's algorithm on vLLM's requests against the same search on Banyan's tree.</p><span class="x">6.4 s → 2.6 s</span></li>
+  <li><a class="t" href="search.html">Reasoning by tree search</a><p>rStar-Math's Monte Carlo tree search with code execution, against the authors' implementation.</p><span class="x">532 s → 115 s</span></li>
+  <li><a class="t" href="jailbreak.html">Jailbreak search</a><p>BOA's search for a jailbreak among a model's likely responses, 600 seconds, against the authors' implementation.</p><span class="x">22,193 → 1,021,692 nodes</span></li>
+</ul>
+<p class="small">On the right of each line, the page's own measurement: the baseline's time or count, then Banyan's.</p>
 </div></main>
 
 <footer class="site-footer"><div class="wrapper">Banyan is a research system under development.</div></footer>

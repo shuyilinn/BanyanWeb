@@ -83,3 +83,9 @@ details.main-item[open] > summary { border-bottom: 1px solid var(--rule); margin
 table.setup th[scope], table.setup tbody th { background: #f7f7f7; font-weight: 600; white-space: nowrap; width: 1%; }
 table.setup td { width: 49%; }
 .legend-i { font-size: 13px; color: var(--ink-2); display: inline-flex; align-items: center; } .legend-i i { display: inline-block; width: 14px; height: 2px; margin-right: 6px; }
+
+.stills.s3 { grid-template-columns: repeat(3, 1fr); }
+th.group { background: #f7f7f7; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.cases li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 20px; align-items: start; }
+.cases li p { grid-column: 1; margin: 0; }
+.cases li .x { grid-row: 1 / span 2; grid-column: 2; align-self: center; white-space: nowrap; font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
