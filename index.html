@@ -18,7 +18,6 @@ often a model gives a harmful answer, generating a dataset, searching for a corr
 written as a short Python class that says how to steer the model, how to draw each token, when to call a judge and
 which branches to expand or prune. Banyan runs it on the GPU next to the model and keeps everything it generated as
 one tree of tokens, in which samples that begin the same way share the same nodes.</p>
-<p class="authors">Shuyi Lin, Cheng Tan · Northeastern University</p>
 
 <h3>Sampling workloads</h3>
 <p class="small">Many independent samples from one prompt. Banyan's trees from the three sampling use cases <em>(click one to replay it next to its baseline)</em>:</p>
