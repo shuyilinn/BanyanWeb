@@ -98,7 +98,7 @@ These are the small configurations of our evaluation.</p>
       c.moveTo(p0[0], p0[1]); c.lineTo(p1[0], p1[1]); c.stroke(); });
   }
   function draw() {
-    ["sampling", "tofu", "dle"].forEach(function (k) { seg(document.getElementById("s-" + k), window.RUNS[k].sides.right, false);   // round thumbnails on the overview (Shuyi 2026-11-22) });
+    ["sampling", "tofu", "dle"].forEach(function (k) { seg(document.getElementById("s-" + k), window.RUNS[k].sides.right, false); });   // round thumbnails on the overview (Shuyi 2026-11-22)
     ["risk", "search", "jailbreak"].forEach(function (k) { Banyan.still(document.getElementById("s-" + k), window.RUNS[k].right); });
   }
   draw();
