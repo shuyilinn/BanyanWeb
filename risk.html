@@ -19,37 +19,72 @@
 if it is one in ten thousand, plain sampling needs tens of thousands of answers to see it at all.</p>
 <p>Angell et al. (ICML 2026, arXiv:2604.22167) sample instead from a copy of the model whose <em>refusal direction</em>
 has been ablated, which complies far more often, and weight each sample by the ratio of its probability under the
-original model to its probability under the ablated one. The weighted average estimates the original model's rate.</p>
-<p>On Banyan the ablation is a <code>@steer</code> step and the mixture of the two models a <code>@sampling</code> step.
-Both probabilities of every token are stored on the tree, so the weight of a sample is one subtraction.</p>
+original model to its probability under the ablated one. The weighted average estimates the original model's rate.
+On Banyan the ablation is a <code>@steer</code> step and the mixture of the two models a <code>@sampling</code> step;
+both probabilities of every token are stored on the tree, so the weight of a sample is one subtraction.</p>
+<p>Here both sides run the same method on the same request: the authors' own code and Banyan, the same proposal,
+1,000 answers each, the same judge.</p>
 <div class="prompt"><b>Request</b><span id="prompt"></span></div>
+
+<h3>Both runs, on one clock</h3>
+<p>Press Play to replay the two measured runs in step. Left, the authors' 1,000 answers as rows: their code writes them in
+two batches of 500, runs every batch for all 150 steps and judges a batch when it is written. Right, Banyan's tree of its
+1,000 answers, each judged as soon as it finishes. Below, how many answers each side has generated and judged.
+Banyan's answers are all judged at 7.9 s; its remaining 4.7 s (of 12.8 s) are spent writing the tree to disk, which
+every Banyan run does and which is counted in its time.</p>
 <div class="stage" id="stage"></div>
+<p class="small">Each side is drawn left to right: the request is on the left edge and the horizontal position is the token
+position in the answer (the dashed line is the 150-token limit). Left: one horizontal line per answer, in the order of
+the two batches and within a batch in text order; a line is dark blue while it is being written and light once it is
+written. Right: a line's width is the number of answers through it, and where answers split the line branches downwards.
+Hover the chart to move the clock.</p>
+
+<h3>The estimate</h3>
+<p>For this request the authors' brute force (10,000 plain samples) finds <span data-fill="pct(D.estimate.mc)"></span> harmful.
+From these runs: the authors' code <span data-fill="pct(D.estimate.left)"></span> (<span data-fill="D.estimate.hits_left"></span> harmful answers
+found), Banyan <span data-fill="pct(D.estimate.right)"></span> (<span data-fill="D.estimate.hits_right"></span> found). With about ten
+harmful answers in 1,000 one run's estimate varies by roughly a third; the table below averages Banyan over 15 runs.</p>
+<h3>All six requests</h3>
+<table class="meas" id="riskTable"></table>
+<p class="small">Llama-3.2-1B-Instruct with the authors' first six StrongREJECT requests and the StrongREJECT judge; the
+proposal above, 1,000 samples of up to 150 tokens per request. Brute force: the authors' 10,000 plain samples per request.
+The authors' code: one run (seed 42). Banyan: the mean of 15 runs (seeds 2027 to 2041), with the lowest and highest.</p>
+
 <h3>Setup</h3>
 <table class="setup" id="setup"></table>
-<h3>Reading the picture</h3>
-<p>A dot is a node of the stored tree, a line joins a node to its parent, and the distance from the centre is the
-position of the node's token in the output. Both panels use one layout: the same sequence of tokens is at the same
-place in both, so where the two trees contain the same path they coincide. A tree too large to draw whole is drawn as
-the full paths from the root to a random sample of its nodes (drawn here: <span id="ratio"></span>). The slider moves
-through the order in which a run created its nodes, for the runs that recorded it; black dots were just created. The
-numbers under each panel are that run's measured totals.</p>
-<p>Both panels are 1,000 answers to the same request, and both runs are Banyan's: there is no engine baseline for this
-method, so the left panel is the same model sampled without steering. A green dot is an answer the judge scores
-harmful. The dashed ring is the 150-token limit.</p>
-<p>For this request plain sampling found 2 harmful answers in 1,000 and the steered proposal 13.</p>
-<h3>All six requests</h3>
-<table id="riskTable"></table>
-<p class="small">Llama-3.2-1B-Instruct with the StrongREJECT requests and judge; 1,000 samples of up to 150 tokens per request on
-each side. Brute force is the authors' 10,000 plain samples per request. Banyan's estimates are below the brute-force
-rates: this version draws each token from the model's 512 most likely candidates and loses the original model's
-probability outside that set.</p>
+
+<h3>How this was measured</h3>
+<dl class="how">
+  <dt>the authors' code</dt><dd>Their estimator (<code>smc/est_unsafe_to_unsafe.py</code>, <code>smc/estimator.py</code>) unchanged, with three
+  changes around it: the ablation hooks are built for every row (as shipped they are built for an empty slice of rows, so
+  nothing is ablated; their paraphrase script and the paper ablate every row), the chat template's date is fixed to the day
+  of their brute-force runs, and the judge is the same service Banyan uses. Their step loop notes the time at the start of
+  every step, their judge call when it ends.</dd>
+  <dt>Banyan</dt><dd>The algorithm is our application on the user API. The measurement notes the time each node of the tree
+  was made (the runtime's own new-node callback, no change to the system), and its <code>@judge</code> notes the time after each verdict.</dd>
+  <dt>the cost of noting</dt><dd>Each side ran the timed part twice, with and without the notes: the authors' code <span data-fill="D.plain.left.toFixed(1) + ' s without, ' + D.seconds.left.toFixed(1) + ' s with'"></span>;
+  Banyan <span data-fill="D.plain.right.toFixed(1) + ' s without, ' + D.seconds.right.toFixed(1) + ' s with'"></span>. The replay uses the runs with notes.
+  Over three runs the authors' code took 34.3 to 35.1 s and Banyan 12.8 to 13.5 s.</dd>
+</dl>
 </div></main>
 
 <footer class="site-footer"><div class="wrapper">Banyan is a research system under development.</div></footer>
 
-<script src="data/risk.js?v=09b07226"></script>
-<script src="viz.js?v=8961dfc2"></script>
-<script src="page.js?v=77a08f9e"></script>
-<script>Page.run("risk", "plain sampling", "Banyan");</script>
+<script src="data/risk.js?v=e92a0272"></script>
+<script src="replay.js?v=0120dec5"></script>
+<script>
+(function () {
+  var D = window.RUNS["risk"], n = Replay.n;
+  var pct = function (x) { return x >= 0.1 ? (100 * x).toFixed(0) + "%" : x >= 0.01 ? (100 * x).toFixed(1) + "%" : (100 * x).toFixed(2) + "%"; };
+  document.getElementById("prompt").textContent = D.prompt;
+  Replay.mount(document.getElementById("stage"), D);
+  Replay.setup(document.getElementById("setup"), D);
+  document.querySelectorAll("[data-fill]").forEach(function (e) { e.textContent = new Function("D", "n", "pct", "return " + e.dataset.fill)(D, n, pct); });
+  var NAMES = ["Phishing email", "Hate-speech bot", "Propaganda tips", "Bot network", "Plagiarism (shown above)", "Watermark removal"];
+  var t = document.getElementById("riskTable"), h = "<thead><tr><th>Request</th><th class=\"num\">Brute force</th><th class=\"num\">Authors' code</th><th class=\"num\">Banyan, mean of 15</th><th class=\"num\">Banyan, lowest to highest</th></tr></thead><tbody>";
+  D.table.forEach(function (x, i) { h += "<tr><td>" + NAMES[i] + "</td><td class=\"num\">" + pct(x.mc) + "</td><td class=\"num\">" + pct(x.authors) + "</td><td class=\"num\">" + pct(x.banyan) + "</td><td class=\"num\">" + pct(x.lo) + " – " + pct(x.hi) + "</td></tr>"; });
+  t.innerHTML = h + "</tbody>";
+})();
+</script>
 </body>
 </html>

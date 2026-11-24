@@ -17,32 +17,94 @@
 <h2 style="margin-top:8px">Reasoning by tree search</h2>
 <p>rStar-Math (arXiv:2501.04519) solves a math problem by Monte Carlo tree search: the model writes a reasoning step
 with Python code, the code is executed, and the search decides which partial solution to extend next.</p>
-<p>On Banyan the search policy is a Python method and the code execution is an environment call. Sixteen questions
-are searched together in one batch.</p>
-<div class="prompt"><b>Question</b><span id="prompt"></span></div>
+<p>On Banyan the search policy is a Python method and the code execution is an environment call. Both sides search
+the same sixteen GSM8K questions together, with the same model, settings and seed; the trees below are one question's.</p>
+<div class="prompt"><b>Question 13</b><span id="prompt"></span> <span class="small">(correct answer: <span id="gold"></span>)</span></div>
+
+<h3>One run per side, on one clock</h3>
+<p>Press Play to replay the two measured runs in step. Each side shows its search tree for question 13: every step of
+the search, from the moment it became a node of the search, and a black dot on every final answer the search found
+correct. Below, how many of the sixteen questions each side has finished.</p>
 <div class="stage" id="stage"></div>
+<p class="small">Each tree is drawn left to right: the question is on the left edge and the horizontal position is the
+token position in the solution (a step's tokens and, after code, the output the next step sees). A line's width is
+the number of steps below it, and where the search branches the line branches downwards, children in the order they
+were made. Not drawn: samples the authors' rule drops before they become steps (repeated samples, and all final
+answers of an expansion but the first); Banyan's token tree also holds them. Hover the chart to move the clock.</p>
+
+<h3>What each side did</h3>
+<table class="meas" id="counts"></table>
+<p class="small">Banyan's time leaves out writing its trees to disk (<span data-fill="C.dump.toFixed(0)"></span> s), as our
+evaluation does; the authors' time is from their first generate after the warm-up to the end of their program.</p>
+
+<h3>Why the time varies from run to run</h3>
+<p>A run ends when its last question ends. On Banyan each question is searched on its own, so fifteen of the sixteen
+were done by <span data-fill="C.others_end.right.toFixed(0)"></span> s in the run above, and question 13 went on alone
+until <span data-fill="C.q_end.right.toFixed(0)"></span> s. The authors' code advances all sixteen questions one search step
+at a time, so every step waits for the slowest question's samples.</p>
+<p>Question 13 is slow because the model sometimes stops writing steps and starts thinking aloud ("Okay, let's see.
+Carlos wants to know…", weighing 12 against 13 years) until a step reaches its 2,048-token limit. An expansion waits for
+its longest sample, so one such sample turns a half-second expansion into one of 18 to 36 seconds; and once a long step is
+in the tree the search often returns to that branch (in two of the three runs most of the long expansions were in one
+branch). How often this happens depends on the draws: question 13 took
+114 s, 221 s and 367 s in three runs of Banyan. The authors' trees show the same long steps on this question.</p>
+<p>So one run per side is not a speed-up. Over every run of these settings (the evaluation's and this site's):</p>
+<table class="meas" id="spread"></table>
+<p class="small">The authors' code: three runs in our evaluation (seeds 2025–2027) and three for this site (seeds
+2027–2029). Banyan: six runs of the same evaluation version (two sets of three seeds) and six for this site (three seeds,
+each without and with the timing notes). Until 2026-11-24 this page said 5.0× from the evaluation's three runs per side,
+the lucky end of Banyan's spread.</p>
+
 <h3>Setup</h3>
 <table class="setup" id="setup"></table>
-<h3>Reading the picture</h3>
-<p>A dot is a node of the stored tree, a line joins a node to its parent, and the distance from the centre is the
-position of the node's token in the output. Both panels use one layout: the same sequence of tokens is at the same
-place in both, so where the two trees contain the same path they coincide. A tree too large to draw whole is drawn as
-the full paths from the root to a random sample of its nodes (drawn here: <span id="ratio"></span>). The slider moves
-through the order in which a run created its nodes, for the runs that recorded it; black dots were just created. The
-numbers under each panel are that run's measured totals.</p>
-<p>Both sides ran the same search on the same question. A green dot is a final answer the search values +1. The
-authors' tree file has no creation times, so the left panel shows their finished tree; its steps are drawn token by
-token (tokenized with the model's tokenizer) so that both panels measure depth in tokens.</p>
-<p class="small">Qwen3-8B, 16 GSM8K questions searched together, 48 rollouts each, one NVIDIA H100; the times are for the whole run and the
-tree is the first question's. Over three runs per side Banyan's median is 133.6 s, 5.0× faster than the authors' code,
-with accuracy 0.83 against the reference's 0.75 or higher.</p>
+
+<h3>How this was measured</h3>
+<dl class="how">
+  <dt>the authors' code</dt><dd>rStar's own search, through our evaluation's runner (its warm-up, seed and evaluator),
+  with wrappers that note when each sample finished, when each step became a tree node and when each rollout ended.
+  Their algorithm is not changed.</dd>
+  <dt>Banyan</dt><dd>The algorithm is our application on the user API. The measurement notes the time each tree node
+  was made and wraps the application's own <code>@pick</code>, <code>@grow</code> and <code>@judge</code> to note when each
+  step was returned and each answer judged; the measurement changes nothing in the system.</dd>
+  <dt>the runs</dt><dd>Three seeds per side, the two sides one after the other on the same card, never at the same time;
+  the replay is the run that is each side's median (seed 2029 on both sides).</dd>
+</dl>
 </div></main>
 
 <footer class="site-footer"><div class="wrapper">Banyan is a research system under development.</div></footer>
 
-<script src="data/search.js?v=c19f2f03"></script>
-<script src="viz.js?v=8961dfc2"></script>
-<script src="page.js?v=77a08f9e"></script>
-<script>Page.run("search", "authors' code", "Banyan");</script>
+<script src="data/search.js?v=5f40379d"></script>
+<script src="replay.js?v=0120dec5"></script>
+<script>
+(function () {
+  var D = window.RUNS["search"], n = Replay.n, C = D.counts;
+  document.getElementById("prompt").textContent = D.prompt;
+  document.getElementById("gold").textContent = D.gold;
+  Replay.mount(document.getElementById("stage"), D);
+  Replay.setup(document.getElementById("setup"), D);
+  var s = function (x) { return (x >= 100 ? n(x) : x.toFixed(1)) + " s"; };
+  function table(id, head, rows) {
+    var t = document.getElementById(id);
+    t.innerHTML = "<thead><tr>" + head.map(function (h, i) { return "<th" + (i ? " class='num'" : "") + ">" + h + "</th>"; }).join("") + "</tr></thead>";
+    var tb = document.createElement("tbody");
+    rows.forEach(function (r) { var tr = document.createElement("tr"); r.forEach(function (x, i) { var td = document.createElement(i ? "td" : "th"); if (i) td.className = "num"; td.textContent = x; tr.appendChild(td); }); tb.appendChild(tr); });
+    t.appendChild(tb);
+  }
+  var pc = function (x) { return Math.round(16 * x) + " of 16"; };
+  table("counts", ["", D.names.left[0], D.names.right[0]], [
+    ["time, all 16 questions", s(D.seconds.left), s(D.seconds.right)],
+    ["tokens generated, all 16 questions", n(D.tokens.left), n(D.tokens.right)],
+    ["questions with a correct answer found", pc(C.pass_any.left), pc(C.pass_any.right)],
+    ["question 13: search steps", n(C.steps.left), n(C.steps.right)],
+    ["question 13: final answers judged", n(C.answers.left), n(C.answers.right)],
+    ["question 13: of them correct", n(C.correct.left), n(C.correct.right)],
+    ["question 13: finished at", s(C.q_end.left), s(C.q_end.right)]]);
+  var S = C.spread, med = S.median;
+  table("spread", ["", "runs", "median", "range", "speed-up of the medians"], [
+    [D.names.left[0], S.left.length, s(med.left), s(S.left[0]) + " – " + s(S.left[S.left.length - 1]), ""],
+    [D.names.right[0], S.right.length, s(med.right), s(S.right[0]) + " – " + s(S.right[S.right.length - 1]), (med.left / med.right).toFixed(1) + "×"]]);
+  document.querySelectorAll("[data-fill]").forEach(function (e) { e.textContent = new Function("D", "n", "C", "return " + e.dataset.fill)(D, n, C); });
+})();
+</script>
 </body>
 </html>

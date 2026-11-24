@@ -24,7 +24,7 @@ computed once.</p>
 <ul class="cases">
   <li><a class="t" href="sampling.html">Many samples per prompt</a><p>10,000 samples of one GSM8K question with Qwen3-8B: vLLM's 10,000 rows against Banyan's one tree.</p><span class="x">85.4 s → 20.8 s</span></li>
   <li><a class="t" href="tofu.html">Did the model forget? Leak rate after unlearning</a><p>1,024 judged answers per question for a model trained to forget, against vLLM's batched sampling and the same judge.</p><span class="x">7.0 s → 4.8 s</span></li>
-  <li><a class="t" href="risk.html">How often does a model give a harmful answer?</a><p>Estimate a rare harmful-answer rate by sampling from a refusal-ablated copy of the model and reweighting to the original.</p><span class="x">2 → 13 harmful found</span></li>
+  <li><a class="t" href="risk.html">How often does a model give a harmful answer?</a><p>Estimate a rare harmful-answer rate by sampling from a refusal-ablated copy of the model and reweighting to the original: the authors' code against Banyan.</p><span class="x">34.5 s → 12.8 s</span></li>
 </ul>
 
 <h3 id="search-workloads">Search workloads</h3>
@@ -32,8 +32,8 @@ computed once.</p>
 environment in the loop. The reference implementations send each step to the engine as new requests; Banyan runs the
 search inside one tree on the GPU and keeps the batch full.</p>
 <ul class="cases">
-  <li><a class="t" href="search.html">Reasoning by tree search</a><p>rStar-Math's Monte Carlo tree search with code execution, against the authors' implementation.</p><span class="x">532 s → 115 s</span></li>
-  <li><a class="t" href="jailbreak.html">Jailbreak search</a><p>BOA's search for a jailbreak among a model's likely responses, 600 seconds, against the authors' implementation.</p><span class="x">22,193 → 1,021,692 nodes</span></li>
+  <li><a class="t" href="search.html">Reasoning by tree search</a><p>rStar-Math's Monte Carlo tree search with code execution, against the authors' implementation.</p><span class="x">684 s → 200 s (medians)</span></li>
+  <li><a class="t" href="jailbreak.html">Jailbreak search</a><p>BOA's search for a jailbreak among a model's likely responses, the first 200 seconds, against the authors' implementation.</p><span class="x">383 → 16,767 nodes scored</span></li>
 </ul>
 <p class="small">On the right of each line, the page's own measurement: the baseline's time or count, then Banyan's.</p>
 </div></main>

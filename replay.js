@@ -21,6 +21,7 @@
       R = Math.max(R, s.deep);
     });
     var CH = D.charts || [D.chart];                     // one or more charts of what each side has finished
+    var OF = function (spec) { return spec.of === false ? "" : " of " + n(spec.total); };   // of: false, a count without a total
     root.innerHTML =
       '<div class="clockbar"><button class="btn primary" type="button">Play</button><button class="btn" type="button">Restart</button>' +
       '<div class="clock"><span data-r="clock">0.0</span><span class="u"> s</span></div>' +
@@ -68,7 +69,7 @@
       if (HZ) {
         if (RING) { c.beginPath(); c.moveTo(g.x0 + RING * g.xs, g.y0); c.lineTo(g.x0 + RING * g.xs, g.y0 + g.hh); c.stroke(); }
         c.setLineDash([]); c.fillStyle = "#828282"; c.font = (11 * DPR) + "px sans-serif"; c.textAlign = "center";
-        var step = [8, 16, 32, 64, 128, 256].find(function (x) { return R / x <= 6; }) || 256;
+        var step = [8, 16, 32, 64, 128, 256, 512, 1024].find(function (x) { return R / x <= 6; }) || 1024;
         for (var x = 0; x <= R; x += step) c.fillText(x, Math.min(g.W - 10 * DPR, Math.max(8 * DPR, g.x0 + x * g.xs)), g.H - 6 * DPR);
       } else if (RING) { c.beginPath(); c.arc(g.cx, g.cy, RING * g.rs, 0, 6.2832); c.stroke(); }
       c.setLineDash([]);
@@ -120,7 +121,7 @@
       }
       c.globalAlpha = 1;
       var lk = drawMarks(c, g, s.marks, t, function (m) { return m[0] / U; });
-      return [["tree nodes written", n(bs(s.made, t))], ["", ""], lk];
+      return [D.treeLabel === null ? null : [D.treeLabel || "tree nodes written", n(bs(s.made, t))], ["", ""], lk];   // treeLabel: null, not shown
     }
     function cells(k, list) { var e = out[k]; if (!e.firstChild) list.forEach(function () { var d = document.createElement("div"); d.className = "ro"; d.innerHTML = '<span class="k"></span><span class="v"></span>'; e.appendChild(d); });
       list.forEach(function (r, j) { e.children[j].firstChild.textContent = r[0]; e.children[j].lastChild.textContent = r[1]; }); }
@@ -135,7 +136,7 @@
       svg.setAttribute("viewBox", "0 0 " + Wc + " " + Hc); svg.style.width = "100%"; svg.style.height = "auto"; svg.style.display = "block";
       function el(tag, at, txt) { var e = document.createElementNS(NS, tag); for (var k in at) e.setAttribute(k, at[k]); if (txt != null) e.textContent = txt; svg.appendChild(e); return e; }
       [0, TOT / 2, TOT].forEach(function (v) { el("line", { x1: L, x2: Wc - Rm, y1: Y(v), y2: Y(v), stroke: "#e8e8e8" }); el("text", { x: L - 8, y: Y(v) + 4, "text-anchor": "end", "font-size": 12, fill: "#828282" }, n(v)); });
-      var tick = [0.5, 1, 2, 5, 10, 20].filter(function (x) { return TMAX / x <= 10; })[0] || 20;
+      var tick = [0.5, 1, 2, 5, 10, 20, 50, 100, 200].filter(function (x) { return TMAX / x <= 10; })[0] || 200;
       for (var tt = 0; tt <= TMAX + 1e-9; tt += tick) el("text", { x: X(tt), y: Hc - Bm + 18, "text-anchor": "middle", "font-size": 12, fill: "#828282" }, +tt.toFixed(1));
       el("text", { x: (L + Wc - Rm) / 2, y: Hc - 4, "text-anchor": "middle", "font-size": 12, fill: "#424242" }, "seconds");
       el("line", { x1: L, x2: Wc - Rm, y1: Y(0), y2: Y(0), stroke: "#424242" });
@@ -148,7 +149,7 @@
       return function (t) {                     // draws up to t; returns each series' count
         var c = SER.map(function (x) { return bs(x.times, Math.min(t, SEC[x.side])); });
         SER.forEach(function (x, q) { var tk = Math.min(t, SEC[x.side]); path[q].setAttribute("d", curve(x.times, tk)); });
-        lab.forEach(function (e, k) { var tk = Math.min(t, SEC[k]); e.setAttribute("x", X(tk) + 6); e.setAttribute("y", Y(c[k]) + 4 + (k === 0 && Math.abs(Y(c[0]) - Y(c[1])) < 13 ? 13 : 0)); });
+        lab.forEach(function (e, k) { var tk = Math.min(t, SEC[k]), atEnd = X(tk) + 6 + (e.getComputedTextLength ? e.getComputedTextLength() : 0) > Wc; e.setAttribute("text-anchor", atEnd ? "end" : "start"); e.setAttribute("x", atEnd ? X(tk) - 6 : X(tk) + 6); e.setAttribute("y", Y(c[k]) + (atEnd ? (Y(c[k]) < T + 14 ? 16 : -6) : 4) + (k === 0 && Math.abs(Y(c[0]) - Y(c[1])) < 13 ? (atEnd ? -13 : 13) : 0)); });   // a label that would run off the right edge ends at the point, above the line
         cl.setAttribute("x1", X(t)); cl.setAttribute("x2", X(t));
         return c;
       };
@@ -163,21 +164,22 @@
         var tk = Math.min(t, SEC[k]), rows = S[k].kind === "rows" ? drawRows(k, tk) : drawTree(k, tk);
         var cl_ = [];
         CH.forEach(function (spec, j) {
-          if (spec.series) spec.series.forEach(function (x, q) { if (x.side === k) cl_.push([x.metric, n(counts[j][q]) + " of " + n(spec.total)]); });
-          else cl_.push([spec.label.split(",")[0], n(counts[j][k]) + " of " + n(spec.total)]);
+          if (spec.series) spec.series.forEach(function (x, q) { if (x.side === k) cl_.push([x.metric, n(counts[j][q]) + OF(spec)]); });
+          else cl_.push([spec.label.split(",")[0], n(counts[j][k]) + OF(spec)]);
         });
-        cl_.push(rows[0]);
+        if (rows[0]) cl_.push(rows[0]);
         if (rows[2]) cl_.push(rows[2]);
-        cl_.push(["tokens generated (run total)", n(D.tokens[k ? "right" : "left"])], ["finished at", t >= SEC[k] ? SEC[k].toFixed(SEC[k] >= 20 ? 1 : 2) + " s" : "–"]);
+        if (D.tokens) cl_.push(["tokens generated (run total)", n(D.tokens[k ? "right" : "left"])]);   // tokens: null, not shown
+        if (!D.window) cl_.push(["finished at", t >= SEC[k] ? SEC[k].toFixed(SEC[k] >= 20 ? 1 : 2) + " s" : "–"]);
         cells(k, cl_);
       });
       var nm = [D.names.left[0], D.names.right[0]];
-      status.textContent = t >= TMAX - 1e-9
+      status.textContent = t >= TMAX - 1e-9 && !D.window      // window: a cut of longer runs, nothing finished
         ? nm[1] + " finished in " + SEC[1].toFixed(SEC[1] >= 20 ? 1 : 2) + " s, " + nm[0] + " in " + SEC[0].toFixed(SEC[0] >= 20 ? 1 : 2) + " s."
         : "At " + t.toFixed(TMAX >= 20 ? 1 : 2) + " s: " + CH.map(function (spec, j) {
-            if (spec.series) return spec.series.map(function (x, q) { return x.name + " " + n(counts[j][q]); }).join(", ") + " of " + n(spec.total);
-            return spec.label.split(",")[0] + ", " + nm[0] + " " + n(counts[j][0]) + " and " + nm[1] + " " + n(counts[j][1]) + " of " + n(spec.total); }).join("; ") + "." +
-          (t >= SEC[1] ? " " + nm[1] + " finished at " + SEC[1].toFixed(SEC[1] >= 20 ? 1 : 2) + " s." : "");
+            if (spec.series) return spec.series.map(function (x, q) { return x.name + " " + n(counts[j][q]); }).join(", ") + OF(spec);
+            return spec.label.split(",")[0] + ", " + nm[0] + " " + n(counts[j][0]) + " and " + nm[1] + " " + n(counts[j][1]) + OF(spec); }).join("; ") + "." +
+          (t >= SEC[1] && !D.window ? " " + nm[1] + " finished at " + SEC[1].toFixed(SEC[1] >= 20 ? 1 : 2) + " s." : "");
     }
     function setPlaying(on) { st.playing = on; play.textContent = on ? "Pause" : (st.t >= TMAX ? "Replay" : "Play"); if (on) { st.last = performance.now(); requestAnimationFrame(step); } }
     function step(now) { if (!st.playing) return; st.t += (now - st.last) / 1000 * st.speed; st.last = now; if (st.t >= TMAX) { st.t = TMAX; render(); setPlaying(false); return; } render(); requestAnimationFrame(step); }

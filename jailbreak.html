@@ -16,35 +16,84 @@
 <p class="back"><a href="usecases.html">← Use cases</a></p>
 <h2 style="margin-top:8px">Jailbreak search</h2>
 <p>BOA (arXiv:2506.17299) asks whether <em>any</em> likely response of a model to a harmful request is a jailbreak. It
-searches the responses token by token, keeps only continuations whose probability stays above a threshold, samples
-lookaheads from promising nodes and sends them to a judge.</p>
+searches the responses token by token, keeps only continuations whose probability stays above a threshold, scores a
+node by sampling lookaheads from it and sending them to a judge, and always extends the best-scored node next.</p>
 <p>On Banyan the probability threshold is a pruning rule on the GPU, the lookaheads are samples in the same tree,
-and judge calls are batched.</p>
+and judge calls are batched. Here both sides search the same request with the same model, settings and judge.</p>
 <div class="prompt"><b>Request</b><span id="prompt"></span></div>
+
+<h3>The first 200 seconds of both runs, on one clock</h3>
+<p>Press Play to replay the two measured runs in step. Each side shows its search tree: only the nodes the judge has
+scored, each from the moment it got its score. Below, how many search nodes each side has scored so far.
+Both runs had a 600-second budget; this page shows their first 200 seconds (why: below the table). Neither side found
+a jailbreak for this request.</p>
 <div class="stage" id="stage"></div>
+<p class="small">Each side is drawn left to right: the request is on the left edge and the horizontal position is the token
+position in the response. A line's width is the number of scored nodes below it, and where the search branches the
+line branches downwards, children in the order they were scored. Not drawn: the authors' children cut by the threshold
+and, on Banyan's side, the lookaheads and first answers that are also stored in its tree (the authors' code does not
+keep them as tree nodes). Hover the chart to move the clock.</p>
+
+<h3>What each side did in the first 200 seconds</h3>
+<table class="meas" id="counts"></table>
+<p class="small">A search node is scored from ten lookaheads that pass through it, each up to 200 tokens, through the same
+four-layer judge on both sides, and lookaheads already judged for a node above it count, as in the authors' code.
+So a node deep on a path that was already explored can be scored without a new lookahead; most of Banyan's scored
+nodes are scored this way, which is why it scores more nodes than it sends lookaheads to the judge.</p>
+<p class="small">Why 200 seconds: later in a run the authors' code can spend most of its time not searching. When a
+lookahead gets the judge's top score at its third layer, the response goes to the fourth layer (gpt-4o), and the
+search waits for that call; in the run shown it waited <span data-fill="C.wait_4o.left.toFixed(0)"></span> s within the first
+200 s, and 413 s of the whole 671 s. In two other runs of the authors' code on this request, the search stopped adding
+any new text to its tree after about 250 and 360 s. The first 200 seconds compare the two searches while both are searching. One run per side.</p>
+<p class="small">What changed on 2026-11-23: Banyan picked the next node to extend whenever a slot was free, before the
+judge had scored the children it had already picked, and those children were judged first come, first served. A
+high-scored node's children then waited behind hundreds of low-scored ones, and in 600 s the search got 24 tokens
+deep with a best score of 0.42. Now Banyan does not pick while every judging slot is taken, so each pick is made with
+the scores of that moment.</p>
+<p class="small">A correction: until 2026-11-23 this site said Banyan scores 21 times as many nodes (97,636 against 4,641) in
+600 s. Both counts were wrong for a comparison: ours counted lookaheads sent to the judge, not scored nodes, and the
+authors' run it compared with had stopped searching part way.</p>
+
 <h3>Setup</h3>
 <table class="setup" id="setup"></table>
-<h3>Reading the picture</h3>
-<p>A dot is a node of the stored tree, a line joins a node to its parent, and the distance from the centre is the
-position of the node's token in the output. Both panels use one layout: the same sequence of tokens is at the same
-place in both, so where the two trees contain the same path they coincide. A tree too large to draw whole is drawn as
-the full paths from the root to a random sample of its nodes (drawn here: <span id="ratio"></span>). The slider moves
-through the order in which a run created its nodes, for the runs that recorded it; black dots were just created. The
-numbers under each panel are that run's measured totals.</p>
-<p>Both sides had the same 600-second budget, the same request, model and settings, so they search the same tree: the
-two trees start with the same tokens and have the same number of nodes at each of the first twelve token positions.
-Banyan's tree is then much wider. The authors' code does not record when a node was created, so the left panel shows
-its finished tree.</p>
-<p class="small">Llama-3.1-8B-Instruct, a 600-second budget on one NVIDIA H100, target model and judge on the same card. Neither side
-found a jailbreak for this request in that time. Over three runs per side, Banyan scores 25 times as many nodes
-per second.</p>
+
+<h3>How this was measured</h3>
+<dl class="how">
+  <dt>the authors' code</dt><dd>BOA's own search, through our evaluation's runner (its warm-up, seed and judge), with
+  wrappers that note when every tree node is made, cut and scored, and every judge call. Their algorithm is not changed.</dd>
+  <dt>Banyan</dt><dd>The algorithm is our application on the user API. The measurement notes the time each node of the tree
+  was made (the runtime's own new-node callback), wraps the application's own <code>@judge</code> to note each score,
+  and notes when each node was picked and handed to the judge; the measurement changes nothing in the system.</dd>
+  <dt>the runs</dt><dd>Each side ran the request twice with a 600-second budget, without and with the notes; the replay
+  and the table use the runs with notes, cut at 200 seconds.</dd>
+</dl>
 </div></main>
 
 <footer class="site-footer"><div class="wrapper">Banyan is a research system under development.</div></footer>
 
-<script src="data/jailbreak.js?v=a45ca73f"></script>
-<script src="viz.js?v=8961dfc2"></script>
-<script src="page.js?v=77a08f9e"></script>
-<script>Page.run("jailbreak", "authors' code", "Banyan");</script>
+<script src="data/jailbreak.js?v=b9a13ca2"></script>
+<script src="replay.js?v=0120dec5"></script>
+<script>
+(function () {
+  var D = window.RUNS["jailbreak"], n = Replay.n, C = D.counts;
+  document.getElementById("prompt").textContent = D.prompt;
+  Replay.mount(document.getElementById("stage"), D);
+  Replay.setup(document.getElementById("setup"), D);
+  var rows = [
+    ["search nodes scored", n(C.scored.left), n(C.scored.right)],
+    ["search nodes extended", n(C.extended.left), n(C.extended.right)],
+    ["lookaheads the judge scored", n(C.lookaheads.left), n(C.lookaheads.right)],
+    ["of them sent on to its last layer (gpt-4o)", n(C.layer4.left), n(C.layer4.right)],
+    ["seconds waiting for gpt-4o", C.wait_4o.left.toFixed(0) + " s", "–"],
+    ["best score (first reached at)", C.info.left.best.toFixed(2) + " (" + C.info.left.best_at.toFixed(0) + " s)", C.info.right.best.toFixed(2) + " (" + C.info.right.best_at.toFixed(0) + " s)"],
+    ["deepest scored node (tokens)", n(C.info.left.deepest), n(C.info.right.deepest)]];
+  var t = document.getElementById("counts");
+  t.innerHTML = "<thead><tr><th></th><th class='num'>" + D.names.left[0] + "</th><th class='num'>" + D.names.right[0] + "</th></tr></thead>";
+  var tb = document.createElement("tbody");
+  rows.forEach(function (r) { var tr = document.createElement("tr"); r.forEach(function (x, i) { var td = document.createElement(i ? "td" : "th"); if (i) td.className = "num"; td.textContent = x; tr.appendChild(td); }); tb.appendChild(tr); });
+  t.appendChild(tb);
+  document.querySelectorAll("[data-fill]").forEach(function (e) { e.textContent = new Function("D", "n", "C", "return " + e.dataset.fill)(D, n, C); });
+})();
+</script>
 </body>
 </html>
