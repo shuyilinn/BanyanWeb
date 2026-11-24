@@ -1,6 +1,8 @@
 :root {
   --text: #111111; --muted: #828282; --ink-2: #424242; --rule: #e8e8e8; --rule-2: #cfcbc1; --bg: #fdfdfd; --panel: #f4f4f4; --panel-2: #f9f9f9;
-  --link: #2a7ae2; --tree: #2a78d6; --mark: #eb6834;
+  --link: #2a7ae2; --tree: #2a78d6; --mark: #228B22;
+  /* Banyan palette (Shuyi 2026-11-24): main, then darker, darkest, light */
+  --banyan: #228B22; --banyan-2: #1C731C; --banyan-3: #0F400F; --banyan-light: #34D934; --banyan-done: #2F902D; --banyan-live: #0B490C;  /* replay: finished / being-written branches, matched to the blues */
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 * { box-sizing: border-box; }

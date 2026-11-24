@@ -13,6 +13,11 @@ The site is split over two repositories:
   measurement records. `build.py` stays there because it reads that repository's runs and code. Do not edit `data/`
   by hand; see `demo/README.md` there for the steps.
 
+## Colours
+
+Banyan's palette (Shuyi 2026-11-24): `#228B22` (main), `#1C731C`, `#0F400F`, `#34D934`; in the replays finished branches `#2F902D` and branches being written `#0B490C` (the blues' lightness and saturation turned to this green); defined as `--banyan*`
+in `style.css`. vLLM / the baselines stay blue (`#2a78d6`).
+
 ## Before committing
 
 Run `python3 stamp.py` (versions the asset links so browsers pick up changed files). Preview locally with

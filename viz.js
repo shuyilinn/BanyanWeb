@@ -3,7 +3,7 @@
 // same number of real nodes per dot. Banyan.mount(element, pair, options); Banyan.still(canvas, side).
 (function () {
   "use strict";
-  var DPR = Math.min(window.devicePixelRatio || 1, 2), LEFT = "#2a78d6", RIGHT = "#eb6834", MARK = "#12805c", INK = "#111111", RULE = "#cfcbc1";
+  var DPR = Math.min(window.devicePixelRatio || 1, 2), LEFT = "#2a78d6", RIGHT = "#228B22", MARK = "#12805c", INK = "#111111", RULE = "#cfcbc1";
   var BASE_S = 22;                                   // seconds of wall time a replay takes at 1x
   function fmt(v) { return Math.round(v).toLocaleString("en-US"); }
 

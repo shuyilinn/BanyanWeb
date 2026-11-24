@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Banyan</title>
-<link rel="stylesheet" href="style.css?v=543c239d">
+<link rel="stylesheet" href="style.css?v=e97b343f">
 </head>
 <body>
 <header class="site-header"><div class="wrapper">
@@ -85,11 +85,11 @@ comparable.</p>
 
 <script src="data/risk.js?v=e92a0272"></script><script src="data/sampling.js?v=2ceb4301"></script><script src="data/tofu.js?v=47a94781"></script>
 <script src="data/search.js?v=5f40379d"></script><script src="data/jailbreak.js?v=b9a13ca2"></script>
-<script src="viz.js?v=8961dfc2"></script>
+<script src="viz.js?v=a293eb64"></script>
 <script>
 (function () {
   // pages on the replay component carry segments; the older pages carry dots (viz.js)
-  var DPR = Math.min(window.devicePixelRatio || 1, 2), ORANGE = "#eb6834";
+  var DPR = Math.min(window.devicePixelRatio || 1, 2), GREEN = "#228B22";
   function seg(cv, s, horizontal) {             // the finished tree, as the page draws it (horizontal or radial)
     var w = cv.clientWidth || 200; cv.width = w * DPR; cv.height = w * DPR; cv.style.height = w + "px";
     var c = cv.getContext("2d"), cx = cv.width / 2, cy = cv.height / 2, deep = 1, pad = 4 * DPR;
@@ -97,7 +97,7 @@ comparable.</p>
     var rs = (cv.width / 2 - pad) / deep, xs = (cv.width - 2 * pad) / deep, hh = cv.height - 2 * pad;
     var P = horizontal ? function (d, x) { return [pad + d * xs, pad + x / s.units * hh]; }
                        : function (d, x) { var a = -Math.PI / 2 + 2 * Math.PI * x / s.units; return [cx + Math.cos(a) * d * rs, cy + Math.sin(a) * d * rs]; };
-    c.strokeStyle = ORANGE;
+    c.strokeStyle = GREEN;
     s.seg.forEach(function (g) { var p0 = P(g[2], g[0]), p1 = P(g[2] + g[4].length, g[0]);
       c.globalAlpha = g[3] > 1 ? 0.85 : 0.45; c.lineWidth = Math.max(0.5, 0.45 * DPR) + 5 * DPR * Math.sqrt(g[3] / s.units); c.beginPath();
       if (g[2] > 0 && Math.abs(g[0] - g[1]) > 1e-6) {
